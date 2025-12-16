@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.whd.cube.mapper.RegistrationMapper">
+
+    <select id="selectCompetitorList" resultType="com.whd.cube.vo.CompetitorVO">
+        SELECT
+            u.id,
+            u.name,
+            u.gender,
+            u.province,
+            u.display_id AS displayId,
+            /* 将该选手报名的项目ID用逗号拼接 */
+            GROUP_CONCAT(ri.event_id) AS eventIdsStr
+        FROM
+            registration r
+                LEFT JOIN
+            sys_user u ON r.user_id = u.id
+                LEFT JOIN
+            registration_item ri ON r.id = ri.registration_id
+        WHERE
+            r.competition_id = #{competitionId}
+          AND r.status = 1  /* 只查询报名成功的(status=1) */
+        GROUP BY
+            r.id, u.id
+        ORDER BY
+            u.name ASC
+    </select>
+
+    <select id="selectMyRegistrations" resultType="com.whd.cube.vo.MyRegistrationVO">
+        SELECT
+            r.id AS registrationId,
+            r.competition_id AS competitionId,
+            r.status,
+            r.create_time AS createTime,
+            c.name AS competitionName,
+            c.slug,
+            c.location,
+            c.start_date AS startDate,
+            c.end_date AS endDate,
+            /* 将项目名称用 '、' 拼接 */
+            GROUP_CONCAT(e.name SEPARATOR '、') AS eventNames
+        FROM
+            registration r
+                LEFT JOIN
+            competition c ON r.competition_id = c.id
+                LEFT JOIN
+            registration_item ri ON r.id = ri.registration_id
+                LEFT JOIN
+            event e ON ri.event_id = e.id
+        WHERE
+            r.user_id = #{userId}
+        GROUP BY
+            r.id
+        ORDER BY
+            r.create_time DESC
+    </select>
+
+</mapper>

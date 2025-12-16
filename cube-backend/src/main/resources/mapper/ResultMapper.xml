@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.whd.cube.mapper.ResultMapper">
+
+    <select id="selectGlobalRankings" resultType="com.whd.cube.vo.RankingVO">
+        SELECT
+        u.name AS userName,
+        u.display_id AS userDisplayId,
+        u.province AS userProvince,
+
+        <if test="type == 'best'"> r.best AS bestScore, </if>
+        <if test="type == 'average'"> r.average AS bestScore, </if>
+
+        /* ★★★ 核心修改：加上 MAX() 函数，解决 SQL 报错 ★★★ */
+        MAX(c.name) AS competitionName,
+        MAX(c.slug) AS competitionSlug,
+        MAX(c.start_date) AS competitionDate
+
+        FROM
+        result r
+        JOIN
+        sys_user u ON r.user_id = u.id
+        JOIN
+        competition c ON r.competition_id = c.id
+        JOIN
+        (
+        SELECT
+        user_id,
+        <if test="type == 'best'"> MIN(best) </if>
+        <if test="type == 'average'"> MIN(average) </if>
+        AS min_score
+        FROM result
+        WHERE event_id = #{eventId}
+        AND <if test="type == 'best'"> best </if><if test="type == 'average'"> average </if> > 0
+        GROUP BY user_id
+        ) best_r
+        ON r.user_id = best_r.user_id
+        AND <if test="type == 'best'"> r.best </if><if test="type == 'average'"> r.average </if> = best_r.min_score
+        WHERE
+        r.event_id = #{eventId}
+        <if test="region != null and region != ''">
+            AND u.province = #{region}
+        </if>
+        GROUP BY u.id
+        ORDER BY
+        bestScore ASC
+    </select>
+
+    <select id="selectPersonalBests" resultType="com.whd.cube.vo.PersonalBestVO">
+        SELECT
+            e.name AS eventName,
+
+            /* 1. 查出单次最好成绩 */
+            MIN(CASE WHEN r.best > 0 THEN r.best END) AS best,
+
+            /* 2. 查出平均最好成绩 */
+            MIN(CASE WHEN r.average > 0 THEN r.average END) AS average,
+
+            /* 3. ★★★ 查出单次最好成绩对应的比赛名称 ★★★ */
+            (SELECT c.name FROM result r2
+                                    LEFT JOIN competition c ON r2.competition_id = c.id
+             WHERE r2.user_display_id = #{displayId}
+               AND r2.event_id = r.event_id
+               AND r2.best > 0
+               AND c.status = 3  ORDER BY r2.best ASC, r2.create_time DESC LIMIT 1
+            ) AS bestCompName,
+
+        (SELECT c.name FROM result r3
+            LEFT JOIN competition c ON r3.competition_id = c.id
+            WHERE r3.user_display_id = #{displayId}
+            AND r3.event_id = r.event_id
+            AND r3.average > 0
+            AND c.status = 3  ORDER BY r3.average ASC, r3.create_time DESC LIMIT 1
+            ) AS averageCompName
+
+        FROM
+            result r
+            LEFT JOIN event e ON r.event_id = e.id
+            LEFT JOIN competition c_main ON r.competition_id = c_main.id WHERE
+            r.user_display_id = #{displayId}
+                                                                           AND c_main.status = 3 GROUP BY
+            r.event_id, e.name
+        ORDER BY
+            r.event_id ASC
+    </select>
+
+    <select id="selectCompetitionDetails" resultType="com.whd.cube.vo.CompetitionResultVO">
+        SELECT
+        r.*,                        /* 查询 result 表所有成绩字段 */
+        u.name AS userName,         /* 关联查询姓名 */
+        u.province AS userProvince, /* 关联查询省份 */
+        u.gender AS userGender
+        FROM
+        result r
+        LEFT JOIN
+        sys_user u ON r.user_id = u.id
+        WHERE
+        r.competition_id = #{competitionId}
+        AND r.round_type = 'Final'
+        <if test="eventId != null and eventId != ''">
+            AND r.event_id = #{eventId}
+        </if>
+        ORDER BY
+        /* 简单的默认排序，实际排序前端JS会重排 */
+        r.best ASC
+    </select>
+
+    <select id="selectHistoryResults" resultType="com.whd.cube.vo.HistoryResultVO">
+        SELECT
+            r.value1, r.value2, r.value3, r.value4, r.value5,
+            r.best, r.average, r.round_type,
+            e.name AS eventName,
+            c.name AS competitionName,
+            c.slug AS competitionSlug,
+            c.start_date AS competitionDate
+        FROM
+            result r
+                LEFT JOIN competition c ON r.competition_id = c.id
+                LEFT JOIN event e ON r.event_id = e.id
+        WHERE
+            r.user_display_id = #{displayId}
+          AND c.status = 3  ORDER BY
+                                c.start_date DESC,
+                                e.id ASC
+    </select>
+
+</mapper>

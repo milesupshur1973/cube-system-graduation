@@ -1,0 +1,31 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: cube-backend
+
+  servlet:
+    multipart:
+      max-file-size: 5MB      #文件大小
+      max-request-size: 10MB  #单次请求总大小
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/cube_system?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: saveme
+
+# MyBatis Plus
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+  mapper-locations: classpath:mapper/*.xml
+
+  type-aliases-package: com.whd.cube.entity
+
+cube:
+  jwt:
+    secret: MySuperSecretKeyForCubeSystemGraduationProject2025
