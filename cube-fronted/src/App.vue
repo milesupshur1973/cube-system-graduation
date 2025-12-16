@@ -97,6 +97,7 @@
         </div>
       </el-footer>
     </el-container>
+    <AiChat />
   </div>
 </template>
 
@@ -105,6 +106,7 @@ import { ref, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useUserStore } from "@/stores/user";
 import { useEventStore } from "@/stores/event";
+import AiChat from "@/components/AiChat.vue";
 import {
   Grid,
   HomeFilled,
