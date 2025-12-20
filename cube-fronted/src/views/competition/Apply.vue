@@ -82,6 +82,7 @@
                 end-placeholder="结束日期"
                 value-format="YYYY-MM-DD"
                 style="width: 100%"
+                :disabled-date="disabledDate"
               />
             </el-form-item>
           </el-col>
@@ -184,6 +185,17 @@ const rules = {
   eventIds: [
     { required: true, message: "请至少选择一个项目", trigger: "change" },
   ],
+};
+
+// 定义日期禁用逻辑：当前时间往后推7天之前的日期都禁用
+const disabledDate = (time) => {
+  const today = new Date();
+  // 计算7天后的时间戳 (7天 * 24小时 * 60分钟 * 60秒 * 1000毫秒)
+  const sevenDaysLater = today.getTime() + 7 * 24 * 60 * 60 * 1000;
+
+  // 如果日历上的时间小于7天后的时间，则禁用（返回true）
+  // 比如今天是20号，20+7=27号。我们希望27号开始才是可选的。
+  return time.getTime() < sevenDaysLater;
 };
 
 const handleLocationChange = (value) => {

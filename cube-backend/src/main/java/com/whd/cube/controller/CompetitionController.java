@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -145,6 +146,17 @@ public class CompetitionController {
         if (comp.getName() == null || comp.getSlug() == null) {
             return Result.error("比赛名称和代号不能为空");
         }
+
+        // 校验比赛时间：必须至少提前7天
+        if (comp.getStartDate() != null) {
+            LocalDate minDate = LocalDate.now().plusDays(7);
+            if (comp.getStartDate().isBefore(minDate)) {
+                return Result.error("比赛开始时间必须至少在 7 天之后，请预留充足的公示期");
+            }
+        } else {
+            return Result.error("请选择比赛日期");
+        }
+
         // ★★★ 2. 校验必须选项目 ★★★
         if (comp.getEventIds() == null || comp.getEventIds().isEmpty()) {
             return Result.error("请至少选择一个比赛项目");
@@ -265,6 +277,14 @@ public class CompetitionController {
         // 3. 基础校验
         if (comp.getEventIds() == null || comp.getEventIds().isEmpty()) {
             return Result.error("请至少选择一个比赛项目");
+        }
+
+        // 校验比赛时间：必须至少提前7天
+        if (comp.getStartDate() != null) {
+            LocalDate minDate = LocalDate.now().plusDays(7);
+            if (comp.getStartDate().isBefore(minDate)) {
+                return Result.error("比赛开始时间必须至少在 7 天之后");
+            }
         }
 
         // 4. 更新其他基本信息
