@@ -178,7 +178,21 @@ const rules = {
   name: [{ required: true, message: "请输入名称", trigger: "blur" }],
   slug: [{ required: true, message: "请输入代号", trigger: "blur" }],
   selectedLocation: [
-    { required: true, message: "请选择省市", trigger: "change" },
+    { 
+      required: true, 
+      message: "请选择省市", 
+      trigger: "change",
+      validator: (rule, value, callback) => {
+        // 编辑模式下，如果已有province和city，则跳过验证
+        if (isEditMode.value && form.province && form.city) {
+          callback();
+        } else if (value && value.length === 2) {
+          callback();
+        } else {
+          callback(new Error("请选择省市"));
+        }
+      }
+    },
   ],
   location: [{ required: true, message: "请输入地址", trigger: "blur" }],
   dateRange: [{ required: true, message: "请选择日期", trigger: "change" }],
