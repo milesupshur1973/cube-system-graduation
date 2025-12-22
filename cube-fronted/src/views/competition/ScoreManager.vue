@@ -172,6 +172,7 @@ import { getRankings, getPersonPBs, getResultList } from "@/api/result";
 const route = useRoute();
 const slug = route.params.slug;
 const eventStore = useEventStore();
+const endDate = ref("");
 
 const competitionId = ref(null);
 const eventList = ref([]);
@@ -210,6 +211,9 @@ const init = async () => {
     const compRes = await getCompetitionBySlug(slug);
     if (compRes.data.code !== 200) return;
     competitionId.value = compRes.data.data.id;
+
+    // 保存结束日期 判断是否提前归档
+    endDate.value = compRes.data.data.endDate;
 
     // 获取当前比赛状态，否则按钮显示逻辑不生效
     compStatus.value = compRes.data.data.status;
@@ -392,33 +396,54 @@ const handleDnfChange = (checked, index) => {
   }
 };
 
+//结束比赛的方法
 const handleEndCompetition = async () => {
-    try {
-        // ★★★ 完善弹窗文案
-        await ElMessageBox.confirm(
-            "结束比赛后，成绩将向所有选手公开，且主办方无法再修改成绩。\n确认所有成绩都已录入无误吗？", 
-            "结束比赛确认", 
-            {
-                confirmButtonText: "确认结束",
-                cancelButtonText: "取消",
-                type: "warning",
-            }
-        );
-        
-        const res = await updateCompetitionStatus({
-            id: competitionId.value,
-            status: 3 // 设置为 3 (已结束)
-        });
+  // 1. 获取当前日期 (格式化为 YYYY-MM-DD 字符串，方便比较)
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const todayStr = `${year}-${month}-${day}`;
 
-        if (res.data.code === 200) {
-            ElMessage.success("比赛已结束，成绩已发布！");
-            compStatus.value = 3; // 更新页面状态，隐藏按钮，显示"已归档"标签
-        } else {
-            ElMessage.error(res.data.msg);
+  // 2. 默认提示文案 (正常归档)
+  let confirmMsg = "结束比赛后，成绩将向所有选手公开，且主办方无法再修改成绩。\n确认所有成绩都已录入无误吗？";
+  let confirmTitle = "结束比赛确认";
+  let confirmType = "warning";
+
+  // 3. 判断：如果 今天 < 结束日期，说明是“提前归档”
+  if (endDate.value && todayStr < endDate.value) {
+    confirmMsg = '当前日期尚未到达比赛结束日期。是否确认提前结束比赛并发布成绩？';
+    confirmTitle = '提前归档警告';
+    // 可以换个颜色提示，比如 error 红色，或者保持 warning
+    // confirmType = "warning";
+  }
+
+  try {
+    await ElMessageBox.confirm(
+        confirmMsg,
+        confirmTitle,
+        {
+          confirmButtonText: "确认结束",
+          cancelButtonText: "取消",
+          type: confirmType,
         }
-    } catch (e) {
-        // 用户点击取消或网络错误，不做处理
+    );
+
+    // 用户点击确认后，发送请求
+    const res = await updateCompetitionStatus({
+      id: competitionId.value,
+      status: 3 // 设置为 3 (已结束)
+    });
+
+    if (res.data.code === 200) {
+      ElMessage.success("比赛已结束，成绩已发布！");
+      compStatus.value = 3;
+    } else {
+      ElMessage.error(res.data.msg);
     }
+  } catch (e) {
+    // 用户点击取消，什么都不做
+  }
 }
 
 onMounted(() => init());
