@@ -11,6 +11,10 @@
       </el-empty>
     </div>
 
+    <div v-else-if="compInfo.status !== 1" style="text-align: center; margin-top: 50px">
+      <el-empty :description="getStatusText(compInfo.status)" />
+    </div>
+
     <div v-else style="max-width: 800px; margin: 0 auto">
       <div style="text-align: center; margin-bottom: 30px">
         <h2 style="color: #409eff">
@@ -123,6 +127,22 @@ const submitting = ref(false);
 const isUpdate = ref(false); // 标记是“新增”还是“修改”
 
 const getEventName = (id) => eventStore.getEventName(id);
+
+// 根据比赛状态获取提示文本
+const getStatusText = (status) => {
+  switch (status) {
+    case 0:
+      return "比赛正在审核中，暂未开启报名";
+    case 2:
+      return "比赛正在进行中，报名已截止";
+    case 3:
+      return "比赛已结束，报名已截止";
+    case 4:
+      return "比赛未通过审核，无法报名";
+    default:
+      return "当前比赛未开启报名通道";
+  }
+};
 
 // 格式化时间
 const formatDate = (str) => (str ? str.replace("T", " ") : "");
