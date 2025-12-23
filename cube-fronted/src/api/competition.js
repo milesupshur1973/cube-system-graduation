@@ -93,3 +93,11 @@ export function updateCompetitionStatus(data) {
     data,
   });
 }
+
+// 删除比赛
+export function deleteCompetition(id) {
+  return request({
+    url: `/competition/${id}`,
+    method: "delete",
+  });
+}

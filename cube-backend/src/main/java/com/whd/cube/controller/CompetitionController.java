@@ -345,4 +345,30 @@ public class CompetitionController {
 
         return Result.success("状态更新成功");
     }
+
+    /**
+     * 删除比赛（仅允许删除审核中或被驳回的比赛）
+     */
+    @DeleteMapping("/{id}")
+    @Transactional(rollbackFor = Exception.class)
+    public Result delete(@PathVariable Long id) {
+        // 1. 检查比赛是否存在
+        Competition comp = competitionService.getById(id);
+        if (comp == null) return Result.error("比赛不存在");
+
+        // 2. 检查权限
+        Long currentUserId = UserContext.getUserId();
+        if (!comp.getOrganizerId().equals(currentUserId)) {
+            return Result.error("无权删除该比赛");
+        }
+
+        // 3. 检查状态，只能删除审核中或被驳回的比赛
+        if (comp.getStatus() != 0 && comp.getStatus() != 4) {
+            return Result.error("只能删除审核中或被驳回的比赛");
+        }
+
+        // 4. 删除比赛（会自动删除关联的competition_event记录）
+        competitionService.removeById(id);
+        return Result.success("比赛删除成功");
+    }
 }

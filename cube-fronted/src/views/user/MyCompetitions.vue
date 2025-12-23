@@ -135,15 +135,24 @@
               </template>
             </el-table-column>
 
-            <el-table-column label="操作" width="180" align="center">
+            <el-table-column label="操作" width="280" align="center">
               <template #default="scope">
                 <el-button
-                  v-if="scope.row.status === 4"
+                  v-if="[0, 4].includes(scope.row.status)"
                   link
                   type="danger"
                   @click="handleEdit(scope.row)"
                 >
                   <el-icon><Edit /></el-icon> 修改
+                </el-button>
+
+                <el-button
+                  v-if="[0, 4].includes(scope.row.status)"
+                  link
+                  type="danger"
+                  @click="handleDelete(scope.row)"
+                >
+                  <el-icon><Delete /></el-icon> 删除
                 </el-button>
 
                 <el-button
@@ -176,8 +185,9 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { getMyRegistrationList } from "@/api/registration";
-import { getMyOrganizedCompetitions } from "@/api/competition";
-import { Tickets, Location, Plus } from "@element-plus/icons-vue";
+import { getMyOrganizedCompetitions, deleteCompetition } from "@/api/competition";
+import { Tickets, Location, Plus, Edit, Delete } from "@element-plus/icons-vue";
+import { ElMessage, ElMessageBox } from "element-plus";
 
 const router = useRouter();
 const activeTab = ref("joined");
@@ -228,6 +238,33 @@ const handleTabChange = (tabName) => {
 const handleEdit = (row) => {
   // 跳转到申请页，并带上 slug 参数，表明是编辑模式
   router.push(`/competition/apply?slug=${row.slug}`);
+};
+
+const handleDelete = async (row) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除比赛 "${row.name}" 吗？`,
+      "删除确认",
+      {
+        confirmButtonText: "确定删除",
+        cancelButtonText: "取消",
+        type: "warning"
+      }
+    );
+    
+    const res = await deleteCompetition(row.id);
+    if (res.data.code === 200) {
+      ElMessage.success("比赛删除成功");
+      loadOrganized(); // 重新加载列表
+    } else {
+      ElMessage.error(res.data.msg || "删除失败");
+    }
+  } catch (error) {
+    // 取消删除操作，不做任何处理
+    if (error !== "cancel") {
+      ElMessage.error("删除失败");
+    }
+  }
 };
 
 onMounted(() => {

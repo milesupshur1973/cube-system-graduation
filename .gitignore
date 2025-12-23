@@ -60,3 +60,7 @@ cube-fronted/dist/
 # 忽略编辑器临时目录
 .vite-temp/
 .vite/
+
+# 忽略所有 .docx 格式的Word文档
+*.docx
+*.txt
