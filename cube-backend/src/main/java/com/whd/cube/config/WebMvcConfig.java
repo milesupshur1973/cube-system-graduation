@@ -47,6 +47,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/user/register",   // 注册
                         "/files/**",        // 图片资源
                         "/error",           // 错误页
+                        "/ai/**",           // AI接口
 
                         // 2. 公共查询接口
                         "/article/list",    // 公告列表

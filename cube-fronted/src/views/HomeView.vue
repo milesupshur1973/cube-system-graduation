@@ -26,7 +26,21 @@
 
             <el-link type="primary" @click="openArticle(news)">阅读全文</el-link>
           </el-space>
+
         </el-card>
+
+        <!-- 分页组件 -->
+        <div style="text-align: center; margin-top: 20px;">
+          <el-pagination
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :page-sizes="[5, 10, 15, 20]"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="total"
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              background></el-pagination>
+        </div>
       </el-col>
 
       <el-col :span="7" :xs="24">
@@ -79,6 +93,11 @@ const router = useRouter();
 const newsList = ref([]);
 const compList = ref([]);
 
+// 分页相关变量
+const currentPage = ref(1);
+const pageSize = ref(5);
+const total = ref(0);
+
 // 弹窗相关变量
 const dialogVisible = ref(false);
 const currentArticle = ref({});
@@ -105,9 +124,14 @@ const openArticle = (news) => {
 
 const loadData = async () => {
   try {
-    const newsRes = await getArticleList();
+    const newsRes = await getArticleList({
+      page: currentPage.value,
+      size: pageSize.value
+    });
     if (newsRes.data.code === 200) {
-      newsList.value = newsRes.data.data;
+      // 修复：使用 records 代替 list
+      newsList.value = newsRes.data.data.records;
+      total.value = newsRes.data.data.total;
     }
     const compRes = await getUpcomingCompetitions();
     if (compRes.data.code === 200) {
@@ -115,7 +139,21 @@ const loadData = async () => {
     }
   } catch (e) {
     console.error("加载数据失败:", e);
+    newsList.value = [];
+    total.value = 0;
   }
+};
+
+// 分页事件处理
+const handleCurrentChange = (val) => {
+  currentPage.value = val;
+  loadData();
+};
+
+const handleSizeChange = (val) => {
+  pageSize.value = val;
+  currentPage.value = 1; // 切换每页条数时重置到第一页
+  loadData();
 };
 
 onMounted(() => loadData());

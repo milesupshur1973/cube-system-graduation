@@ -49,4 +49,16 @@ public class RegistrationController {
         Long currentUserId = UserContext.getUserId(); // 从 Token 获取
         return Result.success(registrationService.getMyRegistrationList(currentUserId));
     }
+    
+    // 取消报名接口
+    @PostMapping("/cancel")
+    public Result cancel(@RequestParam Long competitionId) {
+        try {
+            Long currentUserId = UserContext.getUserId(); // 从 Token 获取
+            registrationService.cancelRegistration(competitionId, currentUserId);
+            return Result.success("取消报名成功");
+        } catch (RuntimeException e) {
+            return Result.error(e.getMessage());
+        }
+    }
 }

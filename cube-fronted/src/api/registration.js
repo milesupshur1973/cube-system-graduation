@@ -34,3 +34,12 @@ export function getMyRegistrationList() {
     method: "get",
   });
 }
+
+// 取消报名
+export function cancelRegistration(competitionId) {
+  return request({
+    url: "/registration/cancel",
+    method: "post",
+    params: { competitionId }
+  });
+}

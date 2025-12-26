@@ -157,4 +157,27 @@ public class RegistrationServiceImpl extends ServiceImpl<RegistrationMapper, Reg
     public List<MyRegistrationVO> getMyRegistrationList(Long userId) {
         return baseMapper.selectMyRegistrations(userId);
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void cancelRegistration(Long competitionId, Long userId) {
+        // 1. 查询用户的报名记录
+        QueryWrapper<Registration> wrapper = new QueryWrapper<>();
+        wrapper.eq("competition_id", competitionId);
+        wrapper.eq("user_id", userId);
+        Registration reg = getOne(wrapper);
+        
+        if (reg == null) {
+            throw new RuntimeException("未找到报名记录");
+        }
+        
+        // 2. 更新报名状态为已取消
+        reg.setStatus((byte) 2);
+        updateById(reg);
+        
+        // 3. 删除关联的报名项目
+        QueryWrapper<RegistrationItem> itemWrapper = new QueryWrapper<>();
+        itemWrapper.eq("registration_id", reg.getId());
+        registrationItemService.remove(itemWrapper);
+    }
 }

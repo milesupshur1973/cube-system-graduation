@@ -29,4 +29,7 @@ public interface RegistrationService extends IService<Registration> {
 
     // 获取我的所有报名列表
     List<MyRegistrationVO> getMyRegistrationList(Long userId);
+    
+    // 取消报名
+    void cancelRegistration(Long competitionId, Long userId);
 }

@@ -9,6 +9,7 @@ const service = axios.create({
   timeout: 5000,
 });
 
+// 下面的代码是AOP（面向切面编程的一种实现方式）抽离通用逻辑，在切点加入通用逻辑
 // 1. 请求拦截器：每次请求都带上 Token
 service.interceptors.request.use(
   (config) => {

@@ -58,11 +58,12 @@
           <div
             style="
               display: flex;
-              justify-content: space-between;
+              justify-content: flex-end;
+              gap: 10px;
               align-items: center;
             "
           >
-            <div>
+            <div style="margin-right: auto;">
               <span style="color: #666">已选项目数：</span>
               <span
                 style="
@@ -75,6 +76,16 @@
                 {{ selectedEvents.length }}
               </span>
             </div>
+
+            <!-- 取消报名按钮 -->
+            <el-button
+              v-if="isUpdate"
+              type="danger"
+              size="large"
+              @click="handleCancelRegistration"
+            >
+              取消报名
+            </el-button>
 
             <el-button
               type="primary"
@@ -114,7 +125,7 @@ import axios from "axios";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { InfoFilled } from "@element-plus/icons-vue";
 import { getCompetitionEvents } from "@/api/competition";
-import { getMyRegistration, submitRegistration } from "@/api/registration";
+import { getMyRegistration, submitRegistration, cancelRegistration } from "@/api/registration";
 import { useEventStore } from "@/stores/event";
 
 const props = defineProps(["compInfo"]);
@@ -182,6 +193,12 @@ const checkMyRegistration = async () => {
 
 // 3. 提交报名
 const handleSubmit = async () => {
+  // 如果是修改报名且未选择项目，询问是否取消报名
+  if (isUpdate.value && selectedEvents.value.length === 0) {
+    return handleCancelRegistration();
+  }
+  
+  // 原有的验证逻辑，仅对首次报名生效
   if (selectedEvents.value.length === 0) {
     return ElMessage.warning("请至少选择一个项目！");
   }
@@ -209,6 +226,37 @@ const handleSubmit = async () => {
     if (res.data.code === 200) {
       ElMessage.success(isUpdate.value ? "修改成功！" : "报名成功！");
       isUpdate.value = true;
+    } else {
+      ElMessage.error(res.data.msg || "操作失败");
+    }
+  } catch (e) {
+    ElMessage.error("网络异常，请稍后重试");
+  } finally {
+    submitting.value = false;
+  }
+};
+
+// 4. 取消报名
+const handleCancelRegistration = async () => {
+  try {
+    await ElMessageBox.confirm(
+      "确定要取消报名吗？此操作不可恢复。",
+      "取消报名",
+      { confirmButtonText: "确定", cancelButtonText: "取消", type: "warning" }
+    );
+  } catch {
+    return; // 用户点了取消
+  }
+
+  submitting.value = true;
+  try {
+    // 调用取消报名接口
+    const res = await cancelRegistration(props.compInfo.id, userStore.userInfo.id);
+
+    if (res.data.code === 200) {
+      ElMessage.success("取消报名成功！");
+      isUpdate.value = false;
+      selectedEvents.value = [];
     } else {
       ElMessage.error(res.data.msg || "操作失败");
     }

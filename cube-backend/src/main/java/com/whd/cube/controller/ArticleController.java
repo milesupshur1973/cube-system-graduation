@@ -1,6 +1,7 @@
 package com.whd.cube.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.whd.cube.common.Result;
 import com.whd.cube.common.UserContext;
 import com.whd.cube.entity.Article;
@@ -31,12 +32,13 @@ public class ArticleController {
     private UserService userService;
 
     @GetMapping("/list")
-    public Result list() {
+    public Result list(@RequestParam(defaultValue = "1") Integer page, @RequestParam(defaultValue = "5") Integer size) {
         QueryWrapper<Article> wrapper = new QueryWrapper<>();
         wrapper.orderByDesc("publish_time");
-        // 限制只取前 5 条 (可选)
-        wrapper.last("limit 5");
-        return Result.success(articleService.list(wrapper));
+        // 使用 MyBatis Plus 分页查询
+        Page<Article> articlePage = new Page<>(page, size);
+        Page<Article> resultPage = articleService.page(articlePage, wrapper);
+        return Result.success(resultPage);
     }
 
     // 补回详情接口 (阅读全文用)
