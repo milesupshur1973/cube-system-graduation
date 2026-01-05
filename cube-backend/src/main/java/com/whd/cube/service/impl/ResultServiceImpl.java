@@ -164,8 +164,9 @@ public class ResultServiceImpl extends ServiceImpl<ResultMapper, MatchResult> im
     }
 
     /**
-     * 根据 format 计算 Best 和 Average (支持 DNF 逻辑)
-     * 约定：-1 代表 DNF, -2 代表 DNS (本次逻辑中视为 DNF)
+     * 计算并填充 best 和 average
+     * @param r 成绩对象
+     * @param format 赛制 (ao5, mo3, bo3)
      */
     private void calculateStats(MatchResult r, String format) {
         List<Integer> values = new ArrayList<>();
@@ -175,67 +176,72 @@ public class ResultServiceImpl extends ServiceImpl<ResultMapper, MatchResult> im
         values.add(r.getValue4());
         values.add(r.getValue5());
 
-        // 1. 计算单次最佳 (Best)
-        // 逻辑：取所有 > 0 的成绩中的最小值。如果全 <= 0，则 Best = -1 (DNF)
+        // --- 1. 计算 Best (单次最佳) ---
+        // 逻辑：找 >0 的最小值。全 <=0 则为 -1 (DNF)
         int min = Integer.MAX_VALUE;
-        boolean hasValidScore = false;
+        boolean hasValidBest = false;
         for (Integer v : values) {
             if (v != null && v > 0) {
                 min = Math.min(min, v);
-                hasValidScore = true;
+                hasValidBest = true;
             }
         }
-        r.setBest(hasValidScore ? min : -1);
+        r.setBest(hasValidBest ? min : -1);
 
-        // 2. 计算平均 (Average)
+        // --- 2. 计算 Average (平均成绩) ---
         if (format == null) format = "ao5";
         format = format.toLowerCase();
 
+        // 提取有效成绩（大于0的）和 DNF 数量
+        List<Integer> validScores = new ArrayList<>();
+        int dnfCount = 0;
+
+        // 根据 format 决定取前几次成绩
+        // ao5 取前5个，mo3/bo3 取前3个
+        int attemptsToCount = "ao5".equals(format) ? 5 : 3;
+
+        for (int i = 0; i < attemptsToCount; i++) {
+            Integer v = values.get(i);
+            if (v == null || v <= 0) {
+                dnfCount++;
+            } else {
+                validScores.add(v);
+            }
+        }
+
         if ("ao5".equals(format)) {
             // === Ao5 逻辑 ===
-            int dnfCount = 0;
-            List<Integer> effectiveScores = new ArrayList<>();
-
-            for (Integer v : values) {
-                if (v == null || v <= 0) { // DNF 或 DNS
-                    dnfCount++;
-                    effectiveScores.add(Integer.MAX_VALUE); // DNF 视为无穷大，方便排序
-                } else {
-                    effectiveScores.add(v);
-                }
-            }
-
-            // 规则：如果 DNF >= 2，平均成绩为 DNF (-1)
+            // 允许 1 个 DNF。如果有 2 个或更多 DNF，平均为 DNF。
             if (dnfCount >= 2) {
                 r.setAverage(-1);
-                return;
-            }
+            } else {
+                // 如果有 1 个 DNF，它就是最慢的（最大值）。
+                // 逻辑：排序 -> 去掉第一个 -> 去掉最后一个 -> 算中间3个
 
-            // 排序：DNF (MAX_VALUE) 会排在最后
-            Collections.sort(effectiveScores);
-
-            // 去掉第1个(最小)和第5个(最大/DNF)，取中间3个
-            // 注意：因为只有一个 DNF，它肯定在 index=4，会被当做最慢成绩去掉
-            long sum = (long)effectiveScores.get(1) + effectiveScores.get(2) + effectiveScores.get(3);
-            r.setAverage((int) Math.round(sum / 3.0));
-
-        } else if ("mo3".equals(format)) {
-            // === Mo3 逻辑 (前3次取算术平均) ===
-            // 规则：只要有 1 个 DNF，平均就是 DNF
-            long sum = 0;
-            for (int i = 0; i < 3; i++) {
-                Integer v = values.get(i);
-                if (v == null || v <= 0) {
-                    r.setAverage(-1);
-                    return;
+                // 为了方便排序，把 DNF 补进列表，设为最大整数
+                for (int k = 0; k < dnfCount; k++) {
+                    validScores.add(Integer.MAX_VALUE);
                 }
-                sum += v;
+                Collections.sort(validScores);
+
+                // 去头(index 0) 去尾(index 4)
+                long sum = (long)validScores.get(1) + validScores.get(2) + validScores.get(3);
+                r.setAverage((int) Math.round(sum / 3.0));
             }
-            r.setAverage((int) Math.round(sum / 3.0));
 
         } else {
-            // Bo3 或其他，没有平均成绩
-            r.setAverage(0);
+            // === Mo3 / Bo3 逻辑 ===
+            // 只要有任意一个 DNF，平均就是 DNF (-1)
+            // 只有 3 次全部 > 0，才计算算术平均
+            if (dnfCount > 0) {
+                r.setAverage(-1);
+            } else {
+                long sum = 0;
+                for (Integer score : validScores) {
+                    sum += score;
+                }
+                r.setAverage((int) Math.round(sum / 3.0));
+            }
         }
     }
 
