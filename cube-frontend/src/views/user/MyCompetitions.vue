@@ -138,40 +138,41 @@
             <el-table-column label="操作" width="280" align="center">
               <template #default="scope">
                 <el-button
-                  v-if="[0, 4].includes(scope.row.status)"
-                  link
-                  type="danger"
-                  @click="handleEdit(scope.row)"
+                    v-if="[0, 4].includes(scope.row.status)"
+                    link
+                    type="danger"
+                    @click="handleEdit(scope.row)"
                 >
                   <el-icon><Edit /></el-icon> 修改
                 </el-button>
 
                 <el-button
-                  v-if="[0, 4].includes(scope.row.status)"
-                  link
-                  type="danger"
-                  @click="handleDelete(scope.row)"
+                    v-if="[0, 4].includes(scope.row.status)"
+                    link
+                    type="danger"
+                    @click="handleDelete(scope.row)"
                 >
                   <el-icon><Delete /></el-icon> 删除
                 </el-button>
 
                 <el-button
-                  v-else
-                  link
-                  type="primary"
-                  @click="goDetail(scope.row.slug)"
+                    v-else
+                    link
+                    type="primary"
+                    @click="goDetail(scope.row.slug)"
                 >
                   预览
                 </el-button>
 
                 <el-button
-                  v-if="[1, 2, 3].includes(scope.row.status)"
-                  link
-                  type="warning"
-                  @click="$router.push(`/competition/${scope.row.slug}/score`)"
+                    v-if="[1, 2, 3].includes(scope.row.status)"
+                    type="primary"
+                    size="small"
+                    @click="$router.push(`/competition/${scope.row.slug}/score`)"
                 >
-                  管理
+                  录入成绩
                 </el-button>
+
               </template>
             </el-table-column>
           </el-table>

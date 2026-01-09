@@ -35,9 +35,26 @@ public interface ResultMapper extends BaseMapper<MatchResult> {
     // 查询某场比赛的详细成绩（带选手信息）
     List<CompetitionResultVO> selectCompetitionDetails(
             @Param("competitionId") Long competitionId,
-            @Param("eventId") String eventId
+            @Param("eventId") String eventId,
+            @Param("roundId") Long roundId // 新增
     );
 
     // 查询历史成绩
     List<HistoryResultVO> selectHistoryResults(@Param("displayId") String displayId);
+
+    /**
+     * 批量初始化第一轮 (从报名表导入)
+     */
+    void batchInitRound1(@Param("competitionId") Long competitionId,
+                         @Param("eventId") String eventId,
+                         @Param("roundId") Long roundId);
+
+    /**
+     * 批量晋级 (从上一轮前N名导入)
+     */
+    void batchPromote(@Param("competitionId") Long competitionId,
+                      @Param("eventId") String eventId,
+                      @Param("nextRoundId") Long nextRoundId,
+                      @Param("currentRoundId") Long currentRoundId,
+                      @Param("limit") Integer limit);
 }

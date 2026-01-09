@@ -86,22 +86,24 @@
 
     <select id="selectCompetitionDetails" resultType="com.whd.cube.vo.CompetitionResultVO">
         SELECT
-        r.*,                        /* 查询 result 表所有成绩字段 */
-        u.name AS userName,         /* 关联查询姓名 */
-        u.province AS userProvince, /* 关联查询省份 */
+        r.*,
+        u.name AS userName,
+        u.province AS userProvince,
         u.gender AS userGender
-        FROM
-        result r
-        LEFT JOIN
-        sys_user u ON r.user_id = u.id
-        WHERE
-        r.competition_id = #{competitionId}
-        AND r.round_type = 'Final'
+        FROM result r
+        LEFT JOIN sys_user u ON r.user_id = u.id
+        WHERE r.competition_id = #{competitionId}
+        <if test="roundId != null">
+            AND r.round_id = #{roundId}
+        </if>
         <if test="eventId != null and eventId != ''">
             AND r.event_id = #{eventId}
         </if>
         ORDER BY
-        /* 简单的默认排序，实际排序前端JS会重排 */
+        /* WCA 标准排序：先看平均，再看单次，DNF排最后 */
+        CASE WHEN r.average > 0 THEN 0 ELSE 1 END ASC,
+        r.average ASC,
+        CASE WHEN r.best > 0 THEN 0 ELSE 1 END ASC,
         r.best ASC
     </select>
 
@@ -123,5 +125,59 @@
                                 c.start_date DESC,
                                 e.id ASC
     </select>
+
+    <insert id="batchInitRound1">
+        INSERT INTO result (competition_id, event_id, round_id, user_id, user_display_id, create_time)
+        SELECT
+            r.competition_id,
+            ri.event_id,
+            #{roundId},
+            r.user_id,
+            u.display_id,
+            NOW()
+        FROM registration r
+                 JOIN registration_item ri ON r.id = ri.registration_id
+                 JOIN sys_user u ON r.user_id = u.id
+        WHERE r.competition_id = #{competitionId}
+          AND r.status = 1
+          AND ri.event_id = #{eventId}
+          AND NOT EXISTS (
+            SELECT 1 FROM result res
+            WHERE res.competition_id = r.competition_id
+              AND res.event_id = ri.event_id
+              AND res.round_id = #{roundId}
+              AND res.user_id = r.user_id
+        )
+    </insert>
+
+    <insert id="batchPromote">
+        INSERT INTO result (competition_id, event_id, round_id, user_id, user_display_id, create_time)
+        SELECT
+            temp.competition_id,
+            temp.event_id,
+            #{nextRoundId},
+            temp.user_id,
+            temp.user_display_id,
+            NOW()  FROM (
+                            SELECT * FROM result
+                            WHERE competition_id = #{competitionId}
+                              AND event_id = #{eventId}
+                              AND round_id = #{currentRoundId}
+                              AND (best > 0 OR average > 0)
+                            ORDER BY
+                                CASE WHEN average > 0 THEN 0 ELSE 1 END ASC,
+                                average ASC,
+                                CASE WHEN best > 0 THEN 0 ELSE 1 END ASC,
+                                best ASC
+                                LIMIT #{limit}
+                        ) AS temp
+        WHERE NOT EXISTS (
+            SELECT 1 FROM result existing
+            WHERE existing.competition_id = temp.competition_id
+              AND existing.event_id = temp.event_id
+              AND existing.round_id = #{nextRoundId}
+              AND existing.user_id = temp.user_id
+        )
+    </insert>
 
 </mapper>

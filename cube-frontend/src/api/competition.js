@@ -101,3 +101,17 @@ export function deleteCompetition(id) {
     method: "delete",
   });
 }
+
+// 获取编辑用的详细数据
+export function getCompetitionDetailForEdit(id) {
+  return axios.get(`/competition/detail-for-edit/${id}`);
+}
+
+// 获取某场比赛、某个项目的轮次列表
+export function getCompetitionRounds(competitionId, eventId) {
+  return request({
+    url: '/competition-round/list',
+    method: 'get',
+    params: { competitionId, eventId }
+  })
+}

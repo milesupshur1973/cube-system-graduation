@@ -6,6 +6,8 @@ import com.whd.cube.service.ResultService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 /**
  * <p>
  * 比赛成绩表 前端控制器
@@ -41,8 +43,12 @@ public class ResultController {
      */
     @GetMapping("/list")
     public Result listResults(@RequestParam Long competitionId,
-                              @RequestParam(required = false) String eventId) {
-        return Result.success(resultService.getCompetitionDetails(competitionId, eventId));
+                              @RequestParam String eventId,
+                              @RequestParam(required = false) Long roundId) {
+
+        // 如果前端没传 roundId (比如旧页面)，我们可以先临时查一下第一轮，或者报错
+        // 建议前端一定要传。这里为了健壮性，如果没传 roundId，就查该项目下的所有成绩
+        return Result.success(resultService.getCompetitionDetails(competitionId, eventId, roundId));
     }
 
     /**
@@ -63,5 +69,33 @@ public class ResultController {
     @GetMapping("/person/{displayId}/history")
     public Result getPersonHistory(@PathVariable String displayId) {
         return Result.success(resultService.getHistoryResults(displayId));
+    }
+
+    /**
+     * 作用：把“报名成功”的选手全部拉入“第1轮”的成绩表中（创建一个空成绩占位）
+     */
+    @PostMapping("/init-round1")
+    public Result initRound1(@RequestBody Map<String, Object> params) {
+        Long competitionId = Long.valueOf(params.get("competitionId").toString());
+        String eventId = (String) params.get("eventId");
+        Long roundId = Long.valueOf(params.get("roundId").toString()); // 第一轮的 roundId
+
+        resultService.initFirstRound(competitionId, eventId, roundId);
+        return Result.success("选手名单初始化成功");
+    }
+
+    /**
+     * 作用：根据当前轮次的排名，取前 N 名，复制到下一轮
+     */
+    @PostMapping("/promote")
+    public Result promote(@RequestBody Map<String, Object> params) {
+        Long competitionId = Long.valueOf(params.get("competitionId").toString());
+        String eventId = (String) params.get("eventId");
+        Long currentRoundId = Long.valueOf(params.get("currentRoundId").toString());
+        Long nextRoundId = Long.valueOf(params.get("nextRoundId").toString());
+        Integer topN = Integer.valueOf(params.get("topN").toString()); // 前端直接告诉我晋级多少人
+
+        resultService.promoteCompetitors(competitionId, eventId, currentRoundId, nextRoundId, topN);
+        return Result.success("晋级成功，" + topN + " 位选手已进入下一轮");
     }
 }

@@ -40,8 +40,17 @@ public class MatchResult implements Serializable {
     private String eventId;
 
     /**
-     * 轮次：Final(决赛), First(初赛), Second(复赛)
+     * 【新增】轮次ID (关联 competition_round 表的主键)
+     * 用于区分这是哪一轮的成绩
      */
+    @TableField("round_id")
+    private Long roundId;
+
+    /**
+     * 【已废弃】轮次：Final(决赛), First(初赛), Second(复赛)
+     * 该字段已由 roundId 替代，保留仅为兼容旧代码，建议不再使用
+     */
+    @Deprecated
     @TableField("round_type" )
     private String roundType;
 
@@ -101,6 +110,4 @@ public class MatchResult implements Serializable {
 
     @TableField("create_time" )
     private LocalDateTime createTime;
-
-
 }

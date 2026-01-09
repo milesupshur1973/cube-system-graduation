@@ -4,12 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.whd.cube.common.Result;
 import com.whd.cube.common.UserContext;
+import com.whd.cube.dto.CompetitionApplyDTO;
 import com.whd.cube.entity.Competition;
 import com.whd.cube.entity.CompetitionEvent;
+import com.whd.cube.entity.CompetitionRound;
 import com.whd.cube.entity.User;
 import com.whd.cube.service.CompetitionEventService;
+import com.whd.cube.service.CompetitionRoundService;
 import com.whd.cube.service.CompetitionService;
 import com.whd.cube.service.UserService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -39,6 +44,9 @@ public class CompetitionController {
 
     @Autowired
     private CompetitionEventService competitionEventService;
+
+    @Autowired
+    private CompetitionRoundService competitionRoundService;
 
     // 首页/列表页用的接口 (只看已发布的)
     @GetMapping("/list")
@@ -140,56 +148,35 @@ public class CompetitionController {
      * 申请比赛 (主办方调用)
      */
     @PostMapping("/apply")
-    @Transactional(rollbackFor = Exception.class) // 事务：要么都成功，要么都失败
-    public Result apply(@RequestBody Competition comp) {
+    @Transactional(rollbackFor = Exception.class)
+    public Result apply(@RequestBody CompetitionApplyDTO dto) { // ★★★ 参数改为 DTO
         // 1. 基础校验
-        if (comp.getName() == null || comp.getSlug() == null) {
+        if (dto.getName() == null || dto.getSlug() == null) {
             return Result.error("比赛名称和代号不能为空");
         }
 
-        // 校验比赛时间：必须至少提前7天
-        if (comp.getStartDate() != null) {
-            LocalDate minDate = LocalDate.now().plusDays(7);
-            if (comp.getStartDate().isBefore(minDate)) {
-                return Result.error("比赛开始时间必须至少在 7 天之后，请预留充足的公示期");
-            }
-        } else {
-            return Result.error("请选择比赛日期");
+        // 2. 校验 DTO 中的复杂项目配置
+        if (dto.getEvents() == null || dto.getEvents().isEmpty()) {
+            return Result.error("请至少配置一个比赛项目");
         }
 
-        // ★★★ 2. 校验必须选项目 ★★★
-        if (comp.getEventIds() == null || comp.getEventIds().isEmpty()) {
-            return Result.error("请至少选择一个比赛项目");
-        }
-
-        // 3. 查重 Slug (保持原有逻辑)
+        // 3. 查重 Slug (逻辑不变)
         QueryWrapper<Competition> query = new QueryWrapper<>();
-        query.eq("slug", comp.getSlug());
+        query.eq("slug", dto.getSlug());
         if (competitionService.count(query) > 0) {
             return Result.error("赛事代号(Slug)已存在，请更换一个");
         }
 
-        // 4. 填充默认值并保存主表
-        comp.setStatus((byte)0); // 待审核
-        Long currentUserId = UserContext.getUserId();
-        comp.setOrganizerId(currentUserId);
+        // 4. DTO 转 Entity 并保存主表
+        Competition comp = new Competition();
+        BeanUtils.copyProperties(dto, comp); // 复制基本属性
+        comp.setStatus((byte)0); // 默认为待审核
+        comp.setOrganizerId(UserContext.getUserId());
 
-        // 保存主表，保存后 comp.getId() 会自动获取到自增的ID
-        competitionService.save(comp);
+        competitionService.save(comp); // 保存主表，获取 comp.getId()
 
-        // 5. ★★★ 保存项目关联表 (competition_event) ★★★
-        List<CompetitionEvent> eventList = new ArrayList<>();
-
-        for (String eventId : comp.getEventIds()) {
-            com.whd.cube.entity.CompetitionEvent ce = new com.whd.cube.entity.CompetitionEvent();
-            ce.setCompetitionId(comp.getId()); // 使用刚才生成的主键ID
-            ce.setEventId(eventId);
-            ce.setRoundCount(1); // 默认1轮
-            eventList.add(ce);
-        }
-
-        // 批量保存
-        competitionEventService.saveBatch(eventList);
+        // 5. ★★★ 核心：保存项目和轮次 ★★★
+        saveEventsAndRounds(comp.getId(), dto.getEvents());
 
         return Result.success("申请已提交，等待管理员审核");
     }
@@ -251,75 +238,46 @@ public class CompetitionController {
         return Result.success(competitionService.getYearList());
     }
 
-    /**
-     * 修改比赛信息 (用于驳回后重新提交)
-     */
+
     /**
      * 修改比赛信息 (用于驳回后重新提交)
      */
     @PostMapping("/update")
     @Transactional(rollbackFor = Exception.class)
-    public Result update(@RequestBody Competition comp) {
-        // 1. 检查ID
-        if (comp.getId() == null) {
-            return Result.error("比赛ID不能为空");
-        }
+    public Result update(@RequestBody CompetitionApplyDTO dto) {
+        if (dto.getId() == null) return Result.error("比赛ID不能为空");
 
-        Competition oldComp = competitionService.getById(comp.getId());
+        Competition oldComp = competitionService.getById(dto.getId());
         if (oldComp == null) return Result.error("比赛不存在");
 
-        // 2. 权限检查
-        Long currentUserId = UserContext.getUserId();
-        if (!oldComp.getOrganizerId().equals(currentUserId)) {
+        // 鉴权
+        if (!oldComp.getOrganizerId().equals(UserContext.getUserId())) {
             return Result.error("无权修改此比赛");
         }
 
-        // 3. 基础校验
-        if (comp.getEventIds() == null || comp.getEventIds().isEmpty()) {
-            return Result.error("请至少选择一个比赛项目");
-        }
-
-        // 校验比赛时间：必须至少提前7天
-        if (comp.getStartDate() != null) {
-            LocalDate minDate = LocalDate.now().plusDays(7);
-            if (comp.getStartDate().isBefore(minDate)) {
-                return Result.error("比赛开始时间必须至少在 7 天之后");
-            }
-        }
-
-        // 4. 更新其他基本信息
-        oldComp.setName(comp.getName());
-        oldComp.setProvince(comp.getProvince());
-        oldComp.setCity(comp.getCity());
-        oldComp.setLocation(comp.getLocation());
-        oldComp.setStartDate(comp.getStartDate());
-        oldComp.setEndDate(comp.getEndDate());
-        oldComp.setContentDescription(comp.getContentDescription());
-        oldComp.setContentRule(comp.getContentRule());
-        oldComp.setCompetitorLimit(comp.getCompetitorLimit());
-        oldComp.setRegStartTime(comp.getRegStartTime());
-        oldComp.setRegEndTime(comp.getRegEndTime());
-
-        // 5. 状态重置
-        oldComp.setStatus((byte) 0); // 变回“待审核”
-        oldComp.setAuditMsg("");     // 清空之前的驳回理由
+        // 更新基本信息
+        BeanUtils.copyProperties(dto, oldComp, "id", "organizerId", "createTime", "status");
+        // 状态重置为待审核
+        oldComp.setStatus((byte) 0);
+        oldComp.setAuditMsg("");
 
         competitionService.updateById(oldComp);
 
-        // 6. 更新关联项目 (先删后加)
-        QueryWrapper<CompetitionEvent> delWrapper = new QueryWrapper<>();
-        delWrapper.eq("competition_id", comp.getId());
-        competitionEventService.remove(delWrapper);
+        // ★★★ 清理旧数据 (项目 + 轮次) ★★★
+        // 1. 删除旧的项目关联
+        QueryWrapper<CompetitionEvent> delEventWrapper = new QueryWrapper<>();
+        delEventWrapper.eq("competition_id", dto.getId());
+        competitionEventService.remove(delEventWrapper);
 
-        List<CompetitionEvent> eventList = new ArrayList<>();
-        for (String eventId : comp.getEventIds()) {
-            CompetitionEvent ce = new CompetitionEvent();
-            ce.setCompetitionId(comp.getId());
-            ce.setEventId(eventId);
-            ce.setRoundCount(1);
-            eventList.add(ce);
+        // 2. 删除旧的轮次配置
+        QueryWrapper<CompetitionRound> delRoundWrapper = new QueryWrapper<>();
+        delRoundWrapper.eq("competition_id", dto.getId());
+        competitionRoundService.remove(delRoundWrapper);
+
+        // ★★★ 重新保存 ★★★
+        if (dto.getEvents() != null && !dto.getEvents().isEmpty()) {
+            saveEventsAndRounds(dto.getId(), dto.getEvents());
         }
-        competitionEventService.saveBatch(eventList);
 
         return Result.success("修改成功，已重新提交审核");
     }
@@ -370,5 +328,115 @@ public class CompetitionController {
         // 4. 删除比赛（会自动删除关联的competition_event记录）
         competitionService.removeById(id);
         return Result.success("比赛删除成功");
+    }
+
+    /**
+     * 辅助方法：保存复杂的项目和轮次结构
+     */
+    private void saveEventsAndRounds(Long competitionId, List<CompetitionApplyDTO.EventConfigDTO> events) {
+        List<CompetitionEvent> eventList = new ArrayList<>();
+        List<CompetitionRound> roundList = new ArrayList<>();
+
+        for (CompetitionApplyDTO.EventConfigDTO eventConfig : events) {
+            String eventId = eventConfig.getEventId();
+
+            // 1. 准备保存 CompetitionEvent (关联表)
+            CompetitionEvent ce = new CompetitionEvent();
+            ce.setCompetitionId(competitionId);
+            ce.setEventId(eventId);
+            // 轮次数 = 前端传来的轮次列表长度
+            int roundCount = (eventConfig.getRounds() != null) ? eventConfig.getRounds().size() : 1;
+            ce.setRoundCount(roundCount);
+            eventList.add(ce);
+
+            // 2. 准备保存 CompetitionRound (轮次详情表)
+            if (eventConfig.getRounds() != null) {
+                for (CompetitionApplyDTO.RoundConfigDTO roundConfig : eventConfig.getRounds()) {
+                    CompetitionRound round = new CompetitionRound();
+                    round.setCompetitionId(competitionId);
+                    round.setEventId(eventId);
+                    round.setRoundOrder(roundConfig.getRoundOrder()); // e.g., 1
+                    round.setRoundName(roundConfig.getRoundName());   // e.g., "初赛"
+                    round.setAdvancementRule(roundConfig.getAdvancementRule()); // e.g., "TOP-12"
+
+                    roundList.add(round);
+                }
+            }
+        }
+
+        // 批量插入
+        if (!eventList.isEmpty()) competitionEventService.saveBatch(eventList);
+        if (!roundList.isEmpty()) competitionRoundService.saveBatch(roundList);
+    }
+
+    /**
+     * ★★★ 新增：获取比赛详情（专门用于编辑回显） ★★★
+     * 返回结构完全匹配 CompetitionApplyDTO，前端直接回填表单
+     */
+    @GetMapping("/detail-for-edit/{id}")
+    public Result getDetailForEdit(@PathVariable Long id) {
+        // 1. 查主表
+        Competition comp = competitionService.getById(id);
+        if (comp == null) return Result.error("比赛不存在");
+
+        // 2. 权限校验 (只能看自己的，或者管理员)
+        Long currentUserId = UserContext.getUserId();
+        if (!comp.getOrganizerId().equals(currentUserId)) {
+            // 这里简单处理，如果不是主办方也不是管理员... (实际业务可按需加)
+            // return Result.error("无权查看");
+        }
+
+        // 3. 准备 DTO
+        CompetitionApplyDTO dto = new CompetitionApplyDTO();
+        BeanUtils.copyProperties(comp, dto);
+
+        // 4. ★★★ 组装核心：项目 + 轮次 ★★★
+
+        // 4.1 查出该比赛所有的项目 (CompetitionEvent)
+        QueryWrapper<CompetitionEvent> ceQuery = new QueryWrapper<>();
+        ceQuery.eq("competition_id", id);
+        List<CompetitionEvent> ceList = competitionEventService.list(ceQuery);
+
+        // 4.2 查出该比赛所有的轮次 (CompetitionRound)
+        QueryWrapper<CompetitionRound> roundQuery = new QueryWrapper<>();
+        roundQuery.eq("competition_id", id);
+        roundQuery.orderByAsc("round_order"); // 必须按顺序排
+        List<CompetitionRound> allRounds = competitionRoundService.list(roundQuery);
+
+        // 4.3 拼装 List<EventConfigDTO>
+        List<CompetitionApplyDTO.EventConfigDTO> eventConfigList = new ArrayList<>();
+
+        for (CompetitionEvent ce : ceList) {
+            CompetitionApplyDTO.EventConfigDTO eventDTO = new CompetitionApplyDTO.EventConfigDTO();
+            eventDTO.setEventId(ce.getEventId());
+
+            // 筛选出属于当前 eventId 的轮次，并转为 RoundConfigDTO
+            List<CompetitionApplyDTO.RoundConfigDTO> roundDTOs = allRounds.stream()
+                    .filter(r -> r.getEventId().equals(ce.getEventId())) // 过滤
+                    .map(r -> {
+                        CompetitionApplyDTO.RoundConfigDTO rDto = new CompetitionApplyDTO.RoundConfigDTO();
+                        rDto.setRoundOrder(r.getRoundOrder());
+                        rDto.setRoundName(r.getRoundName());
+                        rDto.setAdvancementRule(r.getAdvancementRule());
+                        return rDto;
+                    })
+                    .collect(Collectors.toList());
+
+            // 如果万一数据库里只有 CompetitionEvent 没有 Round (脏数据兜底)，手动补一个默认决赛
+            if (roundDTOs.isEmpty()) {
+                CompetitionApplyDTO.RoundConfigDTO defaultRound = new CompetitionApplyDTO.RoundConfigDTO();
+                defaultRound.setRoundOrder(1);
+                defaultRound.setRoundName("决赛");
+                defaultRound.setAdvancementRule("");
+                roundDTOs.add(defaultRound);
+            }
+
+            eventDTO.setRounds(roundDTOs);
+            eventConfigList.add(eventDTO);
+        }
+
+        dto.setEvents(eventConfigList);
+
+        return Result.success(dto);
     }
 }

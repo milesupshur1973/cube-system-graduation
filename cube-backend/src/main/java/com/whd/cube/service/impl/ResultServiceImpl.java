@@ -6,14 +6,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.whd.cube.common.UserContext;
 import com.whd.cube.dto.ScoreDTO;
-import com.whd.cube.entity.Competition;
-import com.whd.cube.entity.Event;
-import com.whd.cube.entity.MatchResult;
-import com.whd.cube.entity.User;
-import com.whd.cube.mapper.CompetitionMapper;
-import com.whd.cube.mapper.EventMapper;
-import com.whd.cube.mapper.ResultMapper;
-import com.whd.cube.mapper.UserMapper;
+import com.whd.cube.entity.*;
+import com.whd.cube.mapper.*;
 import com.whd.cube.service.RegistrationItemService;
 import com.whd.cube.service.RegistrationService;
 import com.whd.cube.service.ResultService;
@@ -54,6 +48,9 @@ public class ResultServiceImpl extends ServiceImpl<ResultMapper, MatchResult> im
     @Autowired
     private RegistrationItemService registrationItemService;
 
+    @Autowired
+    private CompetitionRoundMapper competitionRoundMapper;
+
     @Override
     public IPage<RankingVO> getRankings(Integer page, Integer size, String eventId, String type, String region) {
         // 1. 构建分页对象
@@ -81,32 +78,35 @@ public class ResultServiceImpl extends ServiceImpl<ResultMapper, MatchResult> im
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean saveScore(ScoreDTO dto) {
-        // 1. 权限校验：必须是主办方
+        // 1. 基础校验 (比赛是否存在、是否结束、是否主办方)
         Long currentUserId = UserContext.getUserId();
         Competition comp = competitionMapper.selectById(dto.getCompetitionId());
         if (comp == null) {
             throw new RuntimeException("赛事不存在");
         }
-
-        // 如果比赛已经结束 (status = 3)，禁止再修改成绩
         if (comp.getStatus() == 3) {
             throw new RuntimeException("比赛已结束并归档，无法再修改成绩！");
         }
-
-        // ★★★ 核心鉴权：判断当前登录用户是否为该比赛的主办方 ★★★
         if (!comp.getOrganizerId().equals(currentUserId)) {
-            // 如果不是主办方，再看看是不是管理员(可选，这里严格点只允许主办方)
-            // 简单起见，我们假设只有主办方能录
             throw new RuntimeException("无权操作：您不是本场比赛的主办方");
         }
 
+        // 2. 校验轮次 ID (RoundId)
+        if (dto.getRoundId() == null) {
+            throw new RuntimeException("必须指定轮次ID");
+        }
+        CompetitionRound round = competitionRoundMapper.selectById(dto.getRoundId());
+        if (round == null || !round.getCompetitionId().equals(dto.getCompetitionId())) {
+            throw new RuntimeException("轮次信息有误，请刷新页面重试");
+        }
+
+        // 3. 校验项目是否存在
         Event event = eventMapper.selectById(dto.getEventId());
         if (event == null) {
             throw new RuntimeException("该项目不存在");
         }
-        String format = event.getFormat();
 
-        // 1. 检查选手是否报名了这场比赛 (且状态为通过)
+        // 4. 校验选手是否报名了这场比赛 (且状态为通过)
         QueryWrapper<com.whd.cube.entity.Registration> regQuery = new QueryWrapper<>();
         regQuery.eq("competition_id", dto.getCompetitionId());
         regQuery.eq("user_id", dto.getUserId());
@@ -117,7 +117,7 @@ public class ResultServiceImpl extends ServiceImpl<ResultMapper, MatchResult> im
             throw new RuntimeException("该选手未报名本场比赛或报名未通过");
         }
 
-        // 2. 检查报名明细中是否包含当前项目
+        // 5. 检查报名明细中是否包含当前项目
         QueryWrapper<com.whd.cube.entity.RegistrationItem> itemQuery = new QueryWrapper<>();
         itemQuery.eq("registration_id", reg.getId());
         itemQuery.eq("event_id", dto.getEventId());
@@ -126,40 +126,44 @@ public class ResultServiceImpl extends ServiceImpl<ResultMapper, MatchResult> im
             throw new RuntimeException("该选手未报名 [" + event.getName() + "] 项目，无法录入成绩");
         }
 
-        // 2. 查找是否已有成绩记录 (如果有就更新，没有就新增)
+        // 6. 使用 round_id 查找成绩
         QueryWrapper<MatchResult> wrapper = new QueryWrapper<>();
         wrapper.eq("competition_id", dto.getCompetitionId());
         wrapper.eq("event_id", dto.getEventId());
         wrapper.eq("user_id", dto.getUserId());
-        // 简单起见，我们默认只有一轮 "Final"
-        wrapper.eq("round_type", "Final");
+        wrapper.eq("round_id", dto.getRoundId()); // ★★★ 使用 roundId 确定唯一性
 
         MatchResult result = getOne(wrapper);
+
         if (result == null) {
+            // 新增记录
             result = new MatchResult();
             result.setCompetitionId(dto.getCompetitionId());
             result.setEventId(dto.getEventId());
             result.setUserId(dto.getUserId());
-            result.setRoundType("Final");
-            // 冗余字段：UserDisplayId
+
+            // 设置轮次信息
+            result.setRoundId(dto.getRoundId());
+            result.setRoundType(round.getRoundName()); // 冗余存一个名字
+
+            // 填充展示ID
             User competitor = userMapper.selectById(dto.getUserId());
             if (competitor != null) {
                 result.setUserDisplayId(competitor.getDisplayId());
             }
         }
 
-        // 3. 设置5次成绩
-        // 前端传来的 null 我们转成 0，方便计算
+        // 7. 填充成绩数据 (null 转 0)
         result.setValue1(dto.getValue1() == null ? 0 : dto.getValue1());
         result.setValue2(dto.getValue2() == null ? 0 : dto.getValue2());
         result.setValue3(dto.getValue3() == null ? 0 : dto.getValue3());
         result.setValue4(dto.getValue4() == null ? 0 : dto.getValue4());
         result.setValue5(dto.getValue5() == null ? 0 : dto.getValue5());
 
-        // 4. 自动计算 Best 和 Average
-        calculateStats(result, format);
+        // 8. 自动计算 Best 和 Average
+        calculateStats(result, event.getFormat());
 
-        // 5. 保存入库
+        // 9. 保存入库
         return saveOrUpdate(result);
     }
 
@@ -246,12 +250,27 @@ public class ResultServiceImpl extends ServiceImpl<ResultMapper, MatchResult> im
     }
 
     @Override
-     public List<CompetitionResultVO> getCompetitionDetails(Long competitionId, String eventId) {
-         return baseMapper.selectCompetitionDetails(competitionId, eventId);
-     }
+    public List<CompetitionResultVO> getCompetitionDetails(Long competitionId, String eventId, Long roundId) {
+        // 调用修改后的 Mapper
+        return baseMapper.selectCompetitionDetails(competitionId, eventId, roundId);
+    }
 
     @Override
     public List<HistoryResultVO> getHistoryResults(String displayId) {
         return baseMapper.selectHistoryResults(displayId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void initFirstRound(Long competitionId, String eventId, Long roundId) {
+        // 直接调用 Mapper，一行代码搞定，无需循环
+        baseMapper.batchInitRound1(competitionId, eventId, roundId);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void promoteCompetitors(Long competitionId, String eventId, Long currentRoundId, Long nextRoundId, Integer topN) {
+        // 直接调用 Mapper
+        baseMapper.batchPromote(competitionId, eventId, nextRoundId, currentRoundId, topN);
     }
 }

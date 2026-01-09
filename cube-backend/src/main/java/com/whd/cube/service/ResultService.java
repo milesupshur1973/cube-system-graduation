@@ -29,7 +29,11 @@ public interface ResultService extends IService<MatchResult> {
     // 保存/更新成绩
     boolean saveScore(ScoreDTO dto);
 
-    List<CompetitionResultVO> getCompetitionDetails(Long competitionId, String eventId);
+    List<CompetitionResultVO> getCompetitionDetails(Long competitionId, String eventId, Long roundId);
 
     List<HistoryResultVO> getHistoryResults(String displayId);
+
+    void initFirstRound(Long competitionId, String eventId, Long roundId);
+
+    void promoteCompetitors(Long competitionId, String eventId, Long currentRoundId, Long nextRoundId, Integer topN);
 }

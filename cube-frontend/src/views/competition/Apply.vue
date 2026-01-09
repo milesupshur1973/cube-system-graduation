@@ -98,18 +98,91 @@
           </el-col>
         </el-row>
 
-        <el-form-item label="开设项目" prop="eventIds">
-          <el-checkbox-group v-model="form.eventIds">
-            <el-checkbox
-              v-for="evt in eventList"
-              :key="evt.id"
-              :label="evt.id"
-              border
-              style="margin-right: 10px; margin-bottom: 10px"
+        <el-form-item label="项目与轮次配置" required>
+          <div style="width: 100%">
+            <div
+                v-for="(item, index) in form.events"
+                :key="index"
+                style="border: 1px solid #dcdfe6; border-radius: 4px; padding: 15px; margin-bottom: 15px; position: relative;"
             >
-              {{ evt.name }}
-            </el-checkbox>
-          </el-checkbox-group>
+              <el-button
+                  type="danger"
+                  link
+                  icon="Delete"
+                  style="position: absolute; right: 10px; top: 10px;"
+                  @click="removeEvent(index)"
+              >删除项目</el-button>
+
+              <el-form-item label="比赛项目" label-width="80px" style="margin-bottom: 15px">
+                <el-select v-model="item.eventId" placeholder="请选择项目" style="width: 200px" filterable>
+                  <el-option
+                      v-for="evt in eventList"
+                      :key="evt.id"
+                      :label="evt.name"
+                      :value="evt.id"
+                      :disabled="isEventSelected(evt.id) && item.eventId !== evt.id"
+                  />
+                </el-select>
+              </el-form-item>
+
+              <div style="background-color: #f5f7fa; padding: 10px; border-radius: 4px;">
+                <div style="font-size: 13px; color: #666; margin-bottom: 10px;">轮次设置</div>
+
+                <el-row :gutter="10" v-for="(round, rIndex) in item.rounds" :key="rIndex" style="margin-bottom: 10px; align-items: center;">
+                  <el-col :span="8">
+                    <el-input v-model="round.roundName" placeholder="轮次名称 (如: 初赛)">
+                      <template #prepend>第{{ rIndex + 1 }}轮</template>
+                    </el-input>
+                  </el-col>
+
+                  <el-col :span="10">
+                    <div v-if="rIndex !== item.rounds.length - 1">
+                      <el-input
+                          v-model="round.splitRule.value"
+                          placeholder="数值"
+                          type="number"
+                          :min="1"
+                      >
+                        <template #prepend>
+                          <el-select v-model="round.splitRule.type" placeholder="类型" style="width: 85px">
+                            <el-option label="前 N 名" value="TOP" />
+                            <el-option label="前 %" value="PCT" />
+                          </el-select>
+                        </template>
+                        <template #append>
+                          {{ round.splitRule.type === 'TOP' ? '人' : '%' }}
+                        </template>
+                      </el-input>
+                    </div>
+                    <div v-else style="line-height: 32px; color: #999; font-size: 13px; padding-left: 10px;">
+                      冠军诞生
+                    </div>
+                  </el-col>
+
+                  <el-col :span="6">
+                    <el-button
+                        v-if="item.rounds.length > 1 && rIndex === item.rounds.length - 1"
+                        type="danger"
+                        circle
+                        icon="Minus"
+                        size="small"
+                        @click="removeRound(index)"
+                    />
+                    <el-tag v-if="rIndex === item.rounds.length - 1" type="info" style="margin-left: 5px">决赛</el-tag>
+                    <el-tag v-else type="primary" style="margin-left: 5px">晋级下一轮</el-tag>
+                  </el-col>
+                </el-row>
+
+                <el-button type="primary" link icon="Plus" @click="addRound(index)" style="margin-top: 5px">
+                  增加一轮
+                </el-button>
+              </div>
+            </div>
+
+            <el-button type="primary" plain style="width: 100%; border-style: dashed" icon="Plus" @click="addEvent">
+              添加比赛项目
+            </el-button>
+          </div>
         </el-form-item>
 
         <el-form-item label="赛事详情" prop="contentDescription">
@@ -141,9 +214,9 @@ import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 import { ElMessage } from "element-plus";
 import { useUserStore } from "@/stores/user";
-import { Edit } from "@element-plus/icons-vue";
+import { Edit, Delete, Minus, Plus, Location } from "@element-plus/icons-vue";
 import { provinceAndCityData } from "element-china-area-data";
-import { applyCompetition, updateCompetition, getCompetitionBySlug, getCompetitionEvents } from "@/api/competition";
+import { applyCompetition, updateCompetition, getCompetitionBySlug, getCompetitionEvents, getCompetitionDetailForEdit } from "@/api/competition";
 import MyEditor from "@/components/MyEditor.vue";
 import { useEventStore } from "@/stores/event";
 import { storeToRefs } from "pinia";
@@ -171,7 +244,14 @@ const form = reactive({
   competitorLimit: 100,
   contentDescription: "",
   contentRule: "",
-  eventIds: [],
+  events: [
+    {
+      eventId: '',
+      rounds: [
+        { roundOrder: 1, roundName: '决赛', advancementRule: '' }
+      ]
+    }
+  ],
 });
 
 const rules = {
@@ -196,9 +276,96 @@ const rules = {
   ],
   location: [{ required: true, message: "请输入地址", trigger: "blur" }],
   dateRange: [{ required: true, message: "请选择日期", trigger: "change" }],
-  eventIds: [
-    { required: true, message: "请至少选择一个项目", trigger: "change" },
+  events: [
+    {
+      required: true,
+      validator: (rule, value, callback) => {
+        if (form.events.length === 0) {
+          callback(new Error("请至少添加一个比赛项目"));
+        } else {
+          // 检查是否所有项目都选了 ID
+          const hasEmpty = form.events.some(e => !e.eventId);
+          if (hasEmpty) callback(new Error("请完善项目选择"));
+          else callback();
+        }
+      },
+      trigger: "change"
+    },
   ],
+};
+
+// 判断某个项目是否已经被选中过（用于下拉框禁用已选项）
+const isEventSelected = (id) => {
+  return form.events.some(item => item.eventId === id);
+};
+
+// 添加一个新项目
+const addEvent = () => {
+  form.events.push({
+    eventId: "", // 等待用户选择
+    rounds: [
+      { roundOrder: 1, roundName: "决赛", advancementRule: "" } // 默认一轮
+    ]
+  });
+};
+
+// 删除一个项目
+const removeEvent = (index) => {
+  form.events.splice(index, 1);
+};
+
+// 1. 辅助函数：解析规则字符串 (用于回显)
+// 输入 "TOP-12" -> 返回 { type: 'TOP', value: 12 }
+// 输入 "PCT-75" -> 返回 { type: 'PCT', value: 75 }
+const parseRule = (ruleStr) => {
+  if (!ruleStr) return { type: 'TOP', value: null };
+  const parts = ruleStr.split('-');
+  if (parts.length === 2) {
+    return { type: parts[0], value: parseInt(parts[1]) };
+  }
+  return { type: 'TOP', value: null };
+};
+
+// 给指定项目(eventIndex)增加一轮
+const addRound = (eventIndex) => {
+  const eventItem = form.events[eventIndex];
+  const currentCount = eventItem.rounds.length;
+
+  if (currentCount >= 3) {
+    ElMessage.warning("根据规则，单项比赛最多只能开设 3 轮");
+    return;
+  }
+
+  // 这里的 splitRule 是前端临时用的对象，不传给后端，提交时会拼成 advancementRule
+  if (currentCount === 1) {
+    // 只有1轮变2轮时：第1轮变初赛
+    eventItem.rounds[0].roundName = "初赛";
+    eventItem.rounds[0].splitRule = { type: 'PCT', value: 75 }; // 默认前75%
+  } else {
+    // 2轮变3轮时：第2轮变复赛
+    eventItem.rounds[currentCount - 1].roundName = "复赛";
+    eventItem.rounds[currentCount - 1].splitRule = { type: 'TOP', value: 12 }; // 默认前12人
+  }
+
+  // 压入新的一轮 (决赛)
+  eventItem.rounds.push({
+    roundOrder: currentCount + 1,
+    roundName: "决赛",
+    advancementRule: "",
+    splitRule: { type: 'TOP', value: null } // 决赛不需要规则，占位即可
+  });
+};
+
+// 删除最后一轮
+const removeRound = (eventIndex) => {
+  const eventItem = form.events[eventIndex];
+  if (eventItem.rounds.length > 1) {
+    eventItem.rounds.pop();
+    // 修正现在的最后一轮为决赛
+    const lastIndex = eventItem.rounds.length - 1;
+    eventItem.rounds[lastIndex].roundName = "决赛";
+    eventItem.rounds[lastIndex].advancementRule = "";
+  }
 };
 
 // 定义日期禁用逻辑：当前时间往后推7天之前的日期都禁用
@@ -231,24 +398,25 @@ const handleLocationChange = (value) => {
 const loadDetail = async (slug) => {
   try {
     loading.value = true;
-    
-    // 修复点1：并行请求比赛详情 + 比赛项目
-    const compRes = await getCompetitionBySlug(slug);
-    
-    if (compRes.data.code === 200) {
-      const data = compRes.data.data;
-      
-      // 检查权限：只有自己或驳回状态才能改 (前端简单防一下，后端有兜底)
-      if (data.status !== 4 && data.status !== 0) {
-        ElMessage.warning("当前状态不可修改");
-        // 注意：这里不return，让用户可以查看详情，只是提示一下
-      }
 
-      // 开启编辑模式
+    // 1. 先通过 slug 获取 ID
+    const slugRes = await getCompetitionBySlug(slug);
+    if (slugRes.data.code !== 200) {
+      ElMessage.error("比赛不存在");
+      return;
+    }
+    const simpleInfo = slugRes.data.data;
+
+    // 2. 调用我们要的新接口 (传入 ID)
+    const res = await getCompetitionDetailForEdit(simpleInfo.id);
+
+    if (res.data.code === 200) {
+      const data = res.data.data;
+
       isEditMode.value = true;
       editId.value = data.id;
 
-      // === 回显表单数据 ===
+      // === 直接回显基本信息 ===
       form.name = data.name;
       form.slug = data.slug;
       form.province = data.province;
@@ -258,33 +426,35 @@ const loadDetail = async (slug) => {
       form.contentDescription = data.contentDescription;
       form.contentRule = data.contentRule;
 
-      // 回显日期 (后端是 startDate/endDate 分开的，前端是 dateRange 数组)
+      // 回显日期
       if (data.startDate && data.endDate) {
         form.dateRange = [data.startDate, data.endDate];
       }
 
-      // 回显省市区：保留原始值，Cascader显示为空但不影响提交
-      // 如果用户不重新选择，提交时会用 form.province 和 form.city
-      // 如果用户重新选择了，handleLocationChange 会覆盖这两个值
-      form.selectedLocation = []; // Cascader置空，但province/city已赋值
-      
-      // 修复点2：立即加载项目列表（在同一个 try 块内）
-      const eventRes = await getCompetitionEvents(data.id);
-      if (eventRes.data.code === 200) {
-        // 提取 eventId 放入数组
-        form.eventIds = eventRes.data.data.map(e => e.eventId);
-        console.log("✅ 已回显项目:", form.eventIds); // 调试用
+      // ★★★ 核心修改点：这里替换了原来的直接赋值 ★★★
+      if (data.events && data.events.length > 0) {
+        // 遍历后端返回的数据，给每一轮加上 splitRule 对象
+        form.events = data.events.map(evt => ({
+          eventId: evt.eventId,
+          rounds: evt.rounds.map(r => ({
+            ...r,
+            // 解析字符串 "TOP-12" -> { type: 'TOP', value: 12 }
+            splitRule: parseRule(r.advancementRule)
+          }))
+        }));
       } else {
-        ElMessage.warning("项目列表加载失败，请重新选择");
-        form.eventIds = []; // 安全兜底
+        form.events = [];
       }
-    }
 
+      // Cascader 回显处理
+      form.selectedLocation = [];
+
+    } else {
+      ElMessage.error(res.data.msg);
+    }
   } catch (e) {
     console.error(e);
-    ElMessage.error("加载比赛详情失败");
-    // 修复点3：加载失败时清空表单，避免脏数据
-    form.eventIds = [];
+    ElMessage.error("加载详情失败");
   } finally {
     loading.value = false;
   }
@@ -303,18 +473,35 @@ const submitForm = async () => {
         
         const localNow = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 19);
 
+        const processedEvents = form.events.map(evt => ({
+          eventId: evt.eventId,
+          rounds: evt.rounds.map(r => {
+            // 如果是决赛，或者 splitRule 为空，规则就是空字符串
+            // 否则拼接：TOP-12 或 PCT-75
+            let ruleStr = "";
+            if (r.splitRule && r.splitRule.value) {
+              ruleStr = `${r.splitRule.type}-${r.splitRule.value}`;
+            }
+
+            return {
+              roundOrder: r.roundOrder,
+              roundName: r.roundName,
+              advancementRule: ruleStr // 赋值给后端需要的字段
+            };
+          })
+        }));
+
         // 构造提交数据
         const payload = {
           ...form,
           startDate: form.dateRange[0],
           endDate: form.dateRange[1],
-          
-          // 如果是编辑模式(isEditMode=true)且原数据有regStartTime，则保持原样
-          // 如果是新增模式，或者原数据为空，则使用当前时间(localNow)作为报名开始时间
-          regStartTime: form.regStartTime || localNow, 
-          
-          // 报名截止时间默认为比赛开始当天的 00:00:00
+          regStartTime: form.regStartTime || localNow,
           regEndTime: form.regEndTime || (form.dateRange[0] + "T23:59:59"),
+
+          // ★★★ 核心：直接把 form.events 传给后端 ★★★
+          // 后端 DTO 里的结构是 List<EventConfigDTO> events，跟我们前端构造的完全一致
+          events: processedEvents
         };
         
         // 删除多余字段
