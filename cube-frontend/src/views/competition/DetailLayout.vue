@@ -1,50 +1,37 @@
 <template>
   <div>
-    <div
-      style="
-        background-color: #f5f7fa;
-        padding: 40px 0;
-        border-bottom: 1px solid #ddd;
-      "
-    >
-      <div style="max-width: 1100px; margin: 0 auto; text-align: center">
-        <h1 style="font-size: 28px; color: #303133">
+    <div class="header-wrapper">
+      <div class="header-content">
+        <h1 class="header-title">
           {{ compInfo.name || "加载中..." }}
         </h1>
-        <div style="margin-top: 10px; color: #606266">
+        <div class="header-info">
           <el-icon><Location /></el-icon> {{ compInfo.province }} -
           {{ compInfo.city }}
-          <span style="margin: 0 10px">|</span>
+          <span class="info-separator">|</span>
           <el-icon><Calendar /></el-icon> {{ compInfo.startDate }}
         </div>
       </div>
     </div>
 
-    <div style="background: #fff; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05)">
-      <div
-        style="
-          max-width: 1100px;
-          margin: 0 auto;
-          display: flex;
-          align-items: center;
-        "
-      >
+    <div class="nav-wrapper">
+      <div class="nav-content">
         <el-menu
-          :default-active="route.path"
-          mode="horizontal"
-          router
-          style="border-bottom: none; flex-grow: 1"
+            :default-active="route.path"
+            mode="horizontal"
+            router
+            class="custom-menu"
         >
           <el-menu-item :index="`/competition/${slug}`">详情</el-menu-item>
           <el-menu-item :index="`/competition/${slug}/regulations`"
-            >规则</el-menu-item
+          >规则</el-menu-item
           >
           <el-menu-item :index="`/competition/${slug}/competitors`"
-            >选手</el-menu-item
+          >选手</el-menu-item
           >
-          <el-menu-item 
-            v-if="compInfo.status === 1" 
-            :index="`/competition/${slug}/registration`"
+          <el-menu-item
+              v-if="compInfo.status === 1"
+              :index="`/competition/${slug}/registration`"
           >
             报名</el-menu-item
           >
@@ -52,15 +39,7 @@
       </div>
     </div>
 
-    <div
-      style="
-        max-width: 1100px;
-        margin: 20px auto;
-        padding: 20px;
-        background: #fff;
-        min-height: 400px;
-      "
-    >
+    <div class="main-content">
       <router-view :compInfo="compInfo" />
     </div>
   </div>
@@ -88,3 +67,65 @@ onMounted(async () => {
   }
 });
 </script>
+
+<style scoped>
+/* 头部背景及外层容器 */
+.header-wrapper {
+  background-color: #f5f7fa;
+  padding: 40px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+/* 头部内容居中容器 */
+.header-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* 标题样式 */
+.header-title {
+  font-size: 28px;
+  color: #303133;
+}
+
+/* 地址与日期信息容器 */
+.header-info {
+  margin-top: 10px;
+  color: #606266;
+}
+
+/* 分隔符样式 */
+.info-separator {
+  margin: 0 10px;
+}
+
+/* 导航栏外层阴影与背景 */
+.nav-wrapper {
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* 导航栏内容居中及Flex布局 */
+.nav-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+/* 自定义 el-menu 样式 */
+.custom-menu {
+  border-bottom: none;
+  flex-grow: 1;
+}
+
+/* 主体路由视图容器 */
+.main-content {
+  max-width: 1100px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #fff;
+  min-height: 400px;
+}
+</style>

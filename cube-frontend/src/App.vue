@@ -3,17 +3,17 @@
     <el-container>
       <el-header class="site-header">
         <div class="header-content">
-          <div class="logo" @click="$router.push('/')" style="cursor: pointer">
+          <div class="logo" @click="$router.push('/')">
             <el-icon class="logo-icon"><Grid /></el-icon>
             <span class="logo-text">中国魔方赛事网</span>
           </div>
 
           <el-menu
-            :default-active="activeIndex"
-            mode="horizontal"
-            :ellipsis="false"
-            router
-            class="top-menu"
+              :default-active="activeIndex"
+              mode="horizontal"
+              :ellipsis="false"
+              router
+              class="top-menu"
           >
             <el-menu-item index="/">
               <el-icon><HomeFilled /></el-icon> 首页
@@ -32,7 +32,7 @@
               <el-menu-item index="/results/rank">排名</el-menu-item>
             </el-sub-menu>
 
-            <div style="flex-grow: 1"></div>
+            <div class="flex-spacer"></div>
 
             <el-sub-menu index="/user" v-if="userStore.userInfo.id">
               <template #title>
@@ -42,41 +42,41 @@
 
               <el-menu-item index="/user/profile">我的资料</el-menu-item>
               <el-menu-item index="/user/my-competitions"
-                >赛事中心</el-menu-item
+              >赛事中心</el-menu-item
               >
 
               <el-menu-item
-                :index="`/results/person/${userStore.userInfo.displayId}`"
+                  :index="`/results/person/${userStore.userInfo.displayId}`"
               >
                 我的主页
               </el-menu-item>
 
               <el-menu-item
-                v-if="userStore.userInfo.role === 'admin'"
-                index="/admin/dashboard"
-                style="color: #f56c6c"
+                  v-if="userStore.userInfo.role === 'admin'"
+                  index="/admin/dashboard"
+                  class="admin-menu-item"
               >
                 <el-icon><Monitor /></el-icon> 管理员控制台
               </el-menu-item>
 
               <el-menu-item
-                v-if="userStore.userInfo.role === 'admin'"
-                index="/admin/users"
-                style="color: #f56c6c"
+                  v-if="userStore.userInfo.role === 'admin'"
+                  index="/admin/users"
+                  class="admin-menu-item"
               >
                 <el-icon><UserFilled /></el-icon> 用户权限管理
               </el-menu-item>
 
-              <el-divider style="margin: 5px 0" />
+              <el-divider class="menu-divider" />
 
               <el-menu-item index="/competition/apply">
                 <el-icon><Edit /></el-icon> 申请公示比赛
               </el-menu-item>
 
-              <el-divider style="margin: 5px 0" />
+              <el-divider class="menu-divider" />
 
               <el-menu-item @click="handleLogout" index=""
-                >退出登录</el-menu-item
+              >退出登录</el-menu-item
               >
             </el-sub-menu>
 
@@ -114,6 +114,8 @@ import {
   TrendCharts,
   User,
   Edit,
+  Monitor,
+  UserFilled
 } from "@element-plus/icons-vue";
 
 const route = useRoute();
@@ -124,10 +126,10 @@ const activeIndex = ref("/");
 
 // 监听路由变化，高亮对应的菜单
 watch(
-  () => route.path,
-  (newPath) => {
-    activeIndex.value = newPath;
-  }
+    () => route.path,
+    (newPath) => {
+      activeIndex.value = newPath;
+    }
 );
 
 // 退出登录逻辑
@@ -148,6 +150,7 @@ onMounted(() => {
   background: #fff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
+
 .header-content {
   max-width: 1200px;
   margin: 0 auto;
@@ -155,6 +158,7 @@ onMounted(() => {
   align-items: center;
   height: 60px;
 }
+
 .logo {
   display: flex;
   align-items: center;
@@ -163,16 +167,20 @@ onMounted(() => {
   font-size: 20px;
   font-weight: bold;
   margin-right: 40px;
+  cursor: pointer; /* 提取出来的 cursor 样式 */
 }
+
 .top-menu {
   border-bottom: none !important;
   flex-grow: 1;
 }
+
 .site-main {
   padding: 20px;
   min-height: calc(100vh - 140px);
   background-color: #f4f6f8;
 }
+
 .site-footer {
   background-color: #303133;
   color: #909399;
@@ -180,5 +188,18 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* 新增的提取样式 */
+.flex-spacer {
+  flex-grow: 1;
+}
+
+.admin-menu-item {
+  color: #f56c6c;
+}
+
+.menu-divider {
+  margin: 5px 0;
 }
 </style>

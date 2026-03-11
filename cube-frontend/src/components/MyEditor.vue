@@ -1,17 +1,17 @@
 <template>
-  <div style="border: 1px solid #ccc; z-index: 100">
+  <div class="editor-container">
     <Toolbar
-      style="border-bottom: 1px solid #ccc"
-      :editor="editorRef"
-      :defaultConfig="toolbarConfig"
-      mode="default"
+        class="editor-toolbar"
+        :editor="editorRef"
+        :defaultConfig="toolbarConfig"
+        mode="default"
     />
     <Editor
-      style="height: 300px; overflow-y: hidden"
-      v-model="valueHtml"
-      :defaultConfig="editorConfig"
-      mode="default"
-      @onCreated="handleCreated"
+        class="editor-content"
+        v-model="valueHtml"
+        :defaultConfig="editorConfig"
+        mode="default"
+        @onCreated="handleCreated"
     />
   </div>
 </template>
@@ -33,11 +33,11 @@ const valueHtml = ref("");
 
 // 监听父组件值的变化（回显数据）
 watch(
-  () => props.modelValue,
-  (newVal) => {
-    valueHtml.value = newVal;
-  },
-  { immediate: true }
+    () => props.modelValue,
+    (newVal) => {
+      valueHtml.value = newVal;
+    },
+    { immediate: true }
 );
 
 // 监听内容变化，同步给父组件
@@ -72,3 +72,22 @@ const editorConfig = {
   },
 };
 </script>
+
+<style scoped>
+/* 编辑器最外层容器 */
+.editor-container {
+  border: 1px solid #ccc;
+  z-index: 100;
+}
+
+/* 顶部工具栏 */
+.editor-toolbar {
+  border-bottom: 1px solid #ccc;
+}
+
+/* 编辑器内容区 */
+.editor-content {
+  height: 500px;
+  overflow-y: hidden;
+}
+</style>

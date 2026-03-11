@@ -1,16 +1,16 @@
 <template>
-  <div style="max-width: 800px; margin: 20px auto">
+  <div class="page-container">
     <el-card>
       <el-tabs v-model="activeTab">
         <el-tab-pane label="基本资料" name="info">
-          <div style="text-align: center; margin-bottom: 20px; margin-top: 20px;">
+          <div class="profile-header">
             <el-upload
-              class="avatar-uploader"
-              :action="uploadActionUrl"
-              :show-file-list="false"
-              :on-success="handleAvatarSuccess"
-              :before-upload="beforeAvatarUpload"
-              :headers="uploadHeaders"
+                class="avatar-uploader"
+                :action="uploadActionUrl"
+                :show-file-list="false"
+                :on-success="handleAvatarSuccess"
+                :before-upload="beforeAvatarUpload"
+                :headers="uploadHeaders"
             >
               <div v-if="userInfo.avatarUrl" class="avatar-wrapper">
                 <el-avatar :size="80" :src="userInfo.avatarUrl" />
@@ -19,20 +19,20 @@
                 </div>
               </div>
               <el-avatar
-                v-else
-                :size="80"
-                icon="UserFilled"
-                class="avatar-placeholder"
+                  v-else
+                  :size="80"
+                  icon="UserFilled"
+                  class="avatar-placeholder"
               />
             </el-upload>
-            <div style="font-size: 12px; color: #999; margin-top: 5px">
+            <div class="avatar-tip">
               点击头像可更换
             </div>
-            <h2 style="margin-top: 10px">{{ userInfo.name }}</h2>
+            <h2 class="user-name">{{ userInfo.name }}</h2>
             <el-tag>{{ userInfo.displayId }}</el-tag>
           </div>
 
-          <el-descriptions border :column="1" style="margin-bottom: 20px;">
+          <el-descriptions border :column="1" class="desc-container">
             <el-descriptions-item label="邮箱">{{ userInfo.email }}</el-descriptions-item>
             <el-descriptions-item label="省份">{{ userInfo.province }}</el-descriptions-item>
             <el-descriptions-item label="城市">{{ userInfo.city }}</el-descriptions-item>
@@ -42,38 +42,38 @@
         </el-tab-pane>
 
         <el-tab-pane label="安全设置" name="security">
-          <div style="max-width: 500px; margin: 30px auto;">
-            <el-form 
-              :model="pwdForm" 
-              ref="pwdFormRef" 
-              :rules="pwdRules" 
-              label-width="100px"
-              status-icon
+          <div class="security-container">
+            <el-form
+                :model="pwdForm"
+                ref="pwdFormRef"
+                :rules="pwdRules"
+                label-width="100px"
+                status-icon
             >
               <el-form-item label="旧密码" prop="oldPassword">
-                <el-input 
-                  v-model="pwdForm.oldPassword" 
-                  type="password" 
-                  show-password 
-                  placeholder="请输入当前使用的密码"
+                <el-input
+                    v-model="pwdForm.oldPassword"
+                    type="password"
+                    show-password
+                    placeholder="请输入当前使用的密码"
                 />
               </el-form-item>
-              
+
               <el-form-item label="新密码" prop="newPassword">
-                <el-input 
-                  v-model="pwdForm.newPassword" 
-                  type="password" 
-                  show-password 
-                  placeholder="请输入新密码（至少6位）"
+                <el-input
+                    v-model="pwdForm.newPassword"
+                    type="password"
+                    show-password
+                    placeholder="请输入新密码（至少6位）"
                 />
               </el-form-item>
-              
+
               <el-form-item label="确认新密码" prop="confirmPassword">
-                <el-input 
-                  v-model="pwdForm.confirmPassword" 
-                  type="password" 
-                  show-password 
-                  placeholder="请再次输入新密码"
+                <el-input
+                    v-model="pwdForm.confirmPassword"
+                    type="password"
+                    show-password
+                    placeholder="请再次输入新密码"
                 />
               </el-form-item>
 
@@ -175,14 +175,14 @@ const submitPassword = async () => {
           oldPassword: pwdForm.oldPassword,
           newPassword: pwdForm.newPassword
         });
-        
+
         if (res.data.code === 200) {
           ElMessage.success("修改成功，请重新登录");
           // 修改密码后强制登出
           userStore.logout();
           // 跳转登录页
           setTimeout(() => {
-             window.location.href = "/login";
+            window.location.href = "/login";
           }, 1000);
         } else {
           ElMessage.error(res.data.msg);
@@ -203,6 +203,37 @@ const resetPwdForm = () => {
 </script>
 
 <style scoped>
+.page-container {
+  max-width: 800px;
+  margin: 20px auto;
+}
+
+.profile-header {
+  text-align: center;
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+.avatar-tip {
+  font-size: 12px;
+  color: #999;
+  margin-top: 5px;
+}
+
+.user-name {
+  margin-top: 10px;
+}
+
+.desc-container {
+  margin-bottom: 20px;
+}
+
+.security-container {
+  max-width: 500px;
+  margin: 30px auto;
+}
+
+/* 以下是你原本就有的样式 */
 .avatar-uploader {
   display: inline-block;
   cursor: pointer;

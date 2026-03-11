@@ -1,14 +1,14 @@
 <template>
-  <div style="max-width: 1200px; margin: 20px auto; padding: 0 20px">
-    <div style="margin-bottom: 20px">
-      <h2 style="color: #f56c6c; display: inline-block; margin-right: 20px">
+  <div class="admin-container">
+    <div class="header-section">
+      <h2 class="header-title">
         <el-icon><Monitor /></el-icon> 管理员控制台
       </h2>
       <el-tag type="danger" effect="dark">待审核任务</el-tag>
     </div>
 
     <el-card shadow="never">
-      <div style="text-align: right; margin-bottom: 15px">
+      <div class="action-bar">
         <el-button type="primary" @click="publishDialogVisible = true">
           <el-icon><Plus /></el-icon> 发布公告
         </el-button>
@@ -16,18 +16,18 @@
       </div>
 
       <el-table
-        :data="list"
-        v-loading="loading"
-        border
-        stripe
-        style="width: 100%"
+          :data="list"
+          v-loading="loading"
+          border
+          stripe
+          class="full-width-table"
       >
         <el-table-column prop="id" label="ID" width="80" align="center" />
 
         <el-table-column label="赛事名称" min-width="200">
           <template #default="scope">
-            <span style="font-weight: bold">{{ scope.row.name }}</span>
-            <div style="font-size: 12px; color: #999">
+            <span class="fw-bold">{{ scope.row.name }}</span>
+            <div class="sub-text">
               Slug: {{ scope.row.slug }}
             </div>
           </template>
@@ -35,8 +35,8 @@
 
         <el-table-column label="申请人" width="150" align="center">
           <template #default="scope">
-            <div style="font-weight: bold">{{ scope.row.organizerName }}</div>
-            <div style="font-size: 12px; color: #999">
+            <div class="fw-bold">{{ scope.row.organizerName }}</div>
+            <div class="sub-text">
               (ID: {{ scope.row.organizerId }})
             </div>
           </template>
@@ -63,49 +63,49 @@
         <el-table-column label="操作" width="220" align="center" fixed="right">
           <template #default="scope">
             <el-button size="small" @click="viewDetail(scope.row.slug)"
-              >详情</el-button
+            >详情</el-button
             >
             <el-button
-              type="success"
-              size="small"
-              @click="handlePass(scope.row)"
-              >通过</el-button
+                type="success"
+                size="small"
+                @click="handlePass(scope.row)"
+            >通过</el-button
             >
             <el-button
-              type="danger"
-              size="small"
-              @click="handleReject(scope.row)"
-              >驳回</el-button
+                type="danger"
+                size="small"
+                @click="handleReject(scope.row)"
+            >驳回</el-button
             >
           </template>
         </el-table-column>
       </el-table>
-      <div style="padding: 20px; display: flex; justify-content: flex-end">
+      <div class="pagination-wrap">
         <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :total="total"
-          layout="total, prev, pager, next, jumper"
-          @current-change="handleCurrentChange"
-          background
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :total="total"
+            layout="total, prev, pager, next, jumper"
+            @current-change="handleCurrentChange"
+            background
         />
       </div>
       <el-dialog v-model="publishDialogVisible" title="发布新公告" width="800px">
-      <el-form label-position="top">
-        <el-form-item label="公告标题">
-          <el-input v-model="articleForm.title" placeholder="请输入标题" />
-        </el-form-item>
-        <el-form-item label="公告内容">
-          <MyEditor v-model="articleForm.content" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="publishDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handlePublish" :loading="publishLoading">
-          确认发布
-        </el-button>
-      </template>
-    </el-dialog>
+        <el-form label-position="top">
+          <el-form-item label="公告标题">
+            <el-input v-model="articleForm.title" placeholder="请输入标题" />
+          </el-form-item>
+          <el-form-item label="公告内容">
+            <MyEditor v-model="articleForm.content" />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="publishDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handlePublish" :loading="publishLoading">
+            确认发布
+          </el-button>
+        </template>
+      </el-dialog>
     </el-card>
   </div>
 </template>
@@ -178,9 +178,9 @@ const handleCurrentChange = (val) => {
 const handlePass = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确定要通过 "${row.name}" 的申请吗？\n通过后比赛将立即发布。`,
-      "通过审核",
-      { type: "warning", confirmButtonText: "确定通过" }
+        `确定要通过 "${row.name}" 的申请吗？\n通过后比赛将立即发布。`,
+        "通过审核",
+        { type: "warning", confirmButtonText: "确定通过" }
     );
 
     const res = await auditCompetition(row.id, true, null);
@@ -226,7 +226,7 @@ const handlePublish = async () => {
   if (!articleForm.value.title || !articleForm.value.content) {
     return ElMessage.warning("标题和内容不能为空");
   }
-  
+
   publishLoading.value = true;
   try {
     const res = await publishArticle(articleForm.value);
@@ -250,3 +250,53 @@ onMounted(() => {
   loadData();
 });
 </script>
+
+<style scoped>
+/* 最外层容器 */
+.admin-container {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+/* 顶部标题区域 */
+.header-section {
+  margin-bottom: 20px;
+}
+
+/* 标题文本 */
+.header-title {
+  color: #f56c6c;
+  display: inline-block;
+  margin-right: 20px;
+}
+
+/* 按钮操作栏 */
+.action-bar {
+  text-align: right;
+  margin-bottom: 15px;
+}
+
+/* 表格占满宽 */
+.full-width-table {
+  width: 100%;
+}
+
+/* 加粗文本 */
+.fw-bold {
+  font-weight: bold;
+}
+
+/* 辅助灰色小字 */
+.sub-text {
+  font-size: 12px;
+  color: #999;
+}
+
+/* 分页组件容器 */
+.pagination-wrap {
+  padding: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+</style>

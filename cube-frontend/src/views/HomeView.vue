@@ -1,36 +1,34 @@
 <template>
-  <div style="max-width: 1200px; margin: 20px auto; padding: 0 15px">
+  <div class="page-container">
     <el-row :gutter="20">
       <el-col :span="17" :xs="24">
-        <h3 style="margin-bottom: 20px; color: #409eff">
-          <el-icon style="vertical-align: middle"><Bell /></el-icon> 最新公告
+        <h3 class="section-title">
+          <el-icon class="title-icon"><Bell /></el-icon> 最新公告
         </h3>
 
         <el-card
-          v-for="news in newsList"
-          :key="news.id"
-          shadow="never"
-          style="margin-bottom: 15px"
+            v-for="news in newsList"
+            :key="news.id"
+            shadow="never"
+            class="news-card"
         >
           <template #header>
-            <span style="font-weight: bold">{{ news.title }}</span>
+            <span class="news-title">{{ news.title }}</span>
           </template>
           <el-space direction="vertical" alignment="start">
             <el-text type="info" size="small">
               发布于：{{ formatDateTime(news.publishTime) }} | 作者：管理员
             </el-text>
-            
-            <div style="color: #606266; font-size: 14px; max-height: 60px; overflow: hidden;">
-               (点击下方按钮查看公告详情...)
+
+            <div class="news-desc">
+              (点击下方按钮查看公告详情...)
             </div>
 
             <el-link type="primary" @click="openArticle(news)">阅读全文</el-link>
           </el-space>
-
         </el-card>
 
-        <!-- 分页组件 -->
-        <div style="text-align: center; margin-top: 20px;">
+        <div class="pagination-wrapper">
           <el-pagination
               v-model:current-page="currentPage"
               v-model:page-size="pageSize"
@@ -44,33 +42,33 @@
       </el-col>
 
       <el-col :span="7" :xs="24">
-         <h3 style="margin-bottom: 20px; color: #409eff">
-          <el-icon style="vertical-align: middle"><Trophy /></el-icon> 近期赛事
+        <h3 class="section-title">
+          <el-icon class="title-icon"><Trophy /></el-icon> 近期赛事
         </h3>
         <el-card shadow="never">
           <div
-            v-for="comp in compList"
-            :key="comp.id"
-            style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f0f0f0;"
+              v-for="comp in compList"
+              :key="comp.id"
+              class="comp-item"
           >
-            <el-row align="middle" style="cursor: pointer" @click="goDetail(comp.slug)">
+            <el-row align="middle" class="comp-row" @click="goDetail(comp.slug)">
               <el-col :span="8">
                 <el-tag size="large" effect="plain">{{ formatDate(comp.startDate) }}</el-tag>
               </el-col>
               <el-col :span="16">
-                <div style="font-weight: bold; color: #303133; margin-bottom: 5px">{{ comp.name }}</div>
-                <div style="font-size: 12px; color: #909399"><el-icon><Location /></el-icon> {{ comp.city }}</div>
+                <div class="comp-title">{{ comp.name }}</div>
+                <div class="comp-location"><el-icon><Location /></el-icon> {{ comp.city }}</div>
               </el-col>
             </el-row>
           </div>
           <el-empty v-if="compList.length === 0" description="暂无赛事" :image-size="60" />
-          <el-button style="width: 100%; margin-top: 10px" @click="$router.push('/competition')">查看更多</el-button>
+          <el-button class="more-btn" @click="$router.push('/competition')">查看更多</el-button>
         </el-card>
       </el-col>
     </el-row>
 
     <el-dialog v-model="dialogVisible" :title="currentArticle.title" width="600px">
-      <div style="margin-bottom: 10px; color: #999; font-size: 12px; border-bottom: 1px solid #eee; padding-bottom: 10px;">
+      <div class="dialog-meta">
         发布时间：{{ formatDateTime(currentArticle.publishTime) }}
       </div>
       <div v-html="currentArticle.content" class="article-content"></div>
@@ -78,7 +76,6 @@
         <el-button @click="dialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
-
   </div>
 </template>
 
@@ -106,6 +103,7 @@ const formatDate = (str) => {
   if (!str) return "";
   return str.split("T")[0];
 };
+
 // 增加一个显示详细时间的方法
 const formatDateTime = (str) => {
   if (!str) return "";
@@ -160,6 +158,80 @@ onMounted(() => loadData());
 </script>
 
 <style scoped>
+/* 页面主容器 */
+.page-container {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 0 15px;
+}
+
+/* 模块标题 */
+.section-title {
+  margin-bottom: 20px;
+  color: #409eff;
+}
+
+.title-icon {
+  vertical-align: middle;
+}
+
+/* 公告列表样式 */
+.news-card {
+  margin-bottom: 15px;
+}
+
+.news-title {
+  font-weight: bold;
+}
+
+.news-desc {
+  color: #606266;
+  font-size: 14px;
+  max-height: 60px;
+  overflow: hidden;
+}
+
+.pagination-wrapper {
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* 赛事列表样式 */
+.comp-item {
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.comp-row {
+  cursor: pointer;
+}
+
+.comp-title {
+  font-weight: bold;
+  color: #303133;
+  margin-bottom: 5px;
+}
+
+.comp-location {
+  font-size: 12px;
+  color: #909399;
+}
+
+.more-btn {
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* 弹窗样式 */
+.dialog-meta {
+  margin-bottom: 10px;
+  color: #999;
+  font-size: 12px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
 /* 防止图片溢出弹窗 */
 .article-content :deep(img) {
   max-width: 100%;

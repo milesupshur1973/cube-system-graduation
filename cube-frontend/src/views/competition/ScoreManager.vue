@@ -1,26 +1,19 @@
 <template>
-  <div style="max-width: 1200px; margin: 20px auto; padding: 0 20px">
-    <div
-      style="
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      "
-    >
-      <div style="display: flex; align-items: center; gap: 10px">
-        <h2 style="color: #409eff; margin: 0">
+  <div class="page-container">
+    <div class="header-actions">
+      <div class="title-section">
+        <h2 class="page-title">
           <el-icon><EditPen /></el-icon> 成绩录入
         </h2>
         <el-tag v-if="compStatus === 3" type="info">已结束/归档</el-tag>
         <el-tag v-else type="success">进行中</el-tag>
       </div>
-      
+
       <div>
-        <el-button 
-          v-if="compStatus !== 3" 
-          type="danger" 
-          @click="handleEndCompetition"
+        <el-button
+            v-if="compStatus !== 3"
+            type="danger"
+            @click="handleEndCompetition"
         >
           结束比赛并发布成绩
         </el-button>
@@ -30,19 +23,19 @@
 
     <el-card shadow="never">
       <el-tabs
-        v-model="activeEventId"
-        type="card"
-        @tab-change="handleEventChange"
+          v-model="activeEventId"
+          type="card"
+          @tab-change="handleEventChange"
       >
         <el-tab-pane
-          v-for="evt in eventList"
-          :key="evt.eventId"
-          :label="evt.eventName"
-          :name="evt.eventId"
+            v-for="evt in eventList"
+            :key="evt.eventId"
+            :label="evt.eventName"
+            :name="evt.eventId"
         />
       </el-tabs>
 
-      <div style="margin-top: 10px">
+      <div class="table-container">
         <el-table :data="competitors" v-loading="loading" border stripe>
           <el-table-column type="index" label="#" width="50" align="center" />
           <el-table-column prop="name" label="姓名" width="120" />
@@ -52,7 +45,7 @@
             <template #default="scope">
               <div v-if="scope.row.rawResult">
                 <el-tag type="success" effect="dark">已录入</el-tag>
-                <span style="margin-left: 10px; font-weight: bold">
+                <span class="best-score">
                   最佳: {{ formatTime(scope.row.rawResult.best) }}
                 </span>
               </div>
@@ -65,9 +58,9 @@
           <el-table-column label="操作" width="150" align="center">
             <template #default="scope">
               <el-button
-                type="primary"
-                size="small"
-                @click="openDialog(scope.row)"
+                  type="primary"
+                  size="small"
+                  @click="openDialog(scope.row)"
               >
                 录入成绩
               </el-button>
@@ -78,7 +71,7 @@
     </el-card>
 
     <el-dialog v-model="dialogVisible" title="录入成绩" width="550px">
-      <div style="margin-bottom: 20px">
+      <div class="dialog-header-info">
         <p>
           <strong>选手：</strong> {{ currentCompetitor.name }} ({{
             currentCompetitor.displayId
@@ -86,10 +79,10 @@
         </p>
         <p><strong>项目：</strong> {{ getEventName(activeEventId) }}</p>
         <el-alert
-          title="录入格式：分钟 : 秒.毫秒 (例如 1分 12.34秒，无分钟填0)"
-          type="success"
-          :closable="false"
-          show-icon
+            title="录入格式：分钟 : 秒.毫秒 (例如 1分 12.34秒，无分钟填0)"
+            type="success"
+            :closable="false"
+            show-icon
         />
       </div>
 
@@ -98,48 +91,42 @@
           <el-row :gutter="5" align="middle">
             <el-col :span="6">
               <el-input-number
-                v-model="inputMap['value' + i].min"
-                :min="0"
-                :max="60"
-                controls-position="right"
-                placeholder="0"
-                :disabled="dnfFlags['value' + i]"
-                style="width: 100%"
+                  v-model="inputMap['value' + i].min"
+                  :min="0"
+                  :max="60"
+                  controls-position="right"
+                  placeholder="0"
+                  :disabled="dnfFlags['value' + i]"
+                  class="time-input"
               />
             </el-col>
-            <el-col :span="1" style="text-align: center; color: #606266"
-              >分</el-col
-            >
+            <el-col :span="1" class="unit-label">分</el-col>
 
-            <el-col :span="1" style="text-align: center; font-weight: bold"
-              >:</el-col
-            >
+            <el-col :span="1" class="separator-label">:</el-col>
 
             <el-col :span="9">
               <el-input-number
-                v-model="inputMap['value' + i].sec"
-                :min="0"
-                :max="59.99"
-                :precision="2"
-                :step="0.01"
-                controls-position="right"
-                placeholder="12.34"
-                :disabled="dnfFlags['value' + i]"
-                style="width: 100%"
+                  v-model="inputMap['value' + i].sec"
+                  :min="0"
+                  :max="59.99"
+                  :precision="2"
+                  :step="0.01"
+                  controls-position="right"
+                  placeholder="12.34"
+                  :disabled="dnfFlags['value' + i]"
+                  class="time-input"
               />
             </el-col>
-            <el-col :span="1" style="text-align: center; color: #606266"
-              >秒</el-col
-            >
+            <el-col :span="1" class="unit-label">秒</el-col>
 
-            <el-col :span="6" style="padding-left: 10px">
+            <el-col :span="6" class="dnf-col">
               <el-checkbox
-                v-model="dnfFlags['value' + i]"
-                label="DNF"
-                style="color: #f56c6c; font-weight: bold"
-                border
-                size="small"
-                @change="(val) => handleDnfChange(val, i)"
+                  v-model="dnfFlags['value' + i]"
+                  label="DNF"
+                  class="dnf-checkbox"
+                  border
+                  size="small"
+                  @change="(val) => handleDnfChange(val, i)"
               />
             </el-col>
           </el-row>
@@ -254,17 +241,17 @@ const loadCompetitors = async () => {
 
       // 过滤 + 合并
       competitors.value = allCompetitors
-        .filter(
-          (user) => user.eventIds && user.eventIds.includes(activeEventId.value)
-        )
-        .map((user) => {
-          // 在成绩列表里找这个人的成绩
-          const match = allResults.find((r) => r.userId === user.id);
-          return {
-            ...user,
-            rawResult: match || null, // 把成绩对象挂载到选手身上
-          };
-        });
+          .filter(
+              (user) => user.eventIds && user.eventIds.includes(activeEventId.value)
+          )
+          .map((user) => {
+            // 在成绩列表里找这个人的成绩
+            const match = allResults.find((r) => r.userId === user.id);
+            return {
+              ...user,
+              rawResult: match || null, // 把成绩对象挂载到选手身上
+            };
+          });
     }
   } catch (e) {
     console.error(e);
@@ -305,13 +292,13 @@ const openDialog = (row) => {
 
       if (ms === -1) {
         // --- 情况A: 是 DNF ---
-        dnfFlags["value" + i] = true; 
+        dnfFlags["value" + i] = true;
         // min 和 sec 保持为 0，不用动
       } else if (ms > 0) {
         // --- 情况B: 是有效成绩 ---
         inputMap["value" + i].min = Math.floor(ms / 60000);
         inputMap["value" + i].sec = (ms % 60000) / 1000;
-      } 
+      }
       // --- 情况C: ms == 0 (未录入)，保持上面重置的 0 即可
     }
   }
@@ -448,3 +435,77 @@ const handleEndCompetition = async () => {
 
 onMounted(() => init());
 </script>
+
+<style scoped>
+/* 页面最外层容器 */
+.page-container {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+/* 顶部标题与操作按钮栏 */
+.header-actions {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 标题和标签容器 */
+.title-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* 页面大标题 */
+.page-title {
+  color: #409eff;
+  margin: 0;
+}
+
+/* 表格外层容器 */
+.table-container {
+  margin-top: 10px;
+}
+
+/* 最佳成绩高亮展示 */
+.best-score {
+  margin-left: 10px;
+  font-weight: bold;
+}
+
+/* 对话框头部选手信息容器 */
+.dialog-header-info {
+  margin-bottom: 20px;
+}
+
+/* 输入框通用宽度 */
+.time-input {
+  width: 100%;
+}
+
+/* 分、秒单位文本样式 */
+.unit-label {
+  text-align: center;
+  color: #606266;
+}
+
+/* 冒号分隔符样式 */
+.separator-label {
+  text-align: center;
+  font-weight: bold;
+}
+
+/* DNF 勾选框列布局补白 */
+.dnf-col {
+  padding-left: 10px;
+}
+
+/* DNF 文本颜色强调 */
+.dnf-checkbox {
+  color: #f56c6c;
+  font-weight: bold;
+}
+</style>

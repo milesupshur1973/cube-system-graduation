@@ -1,14 +1,8 @@
 <template>
   <div>
     <div v-if="compInfo.contentRule" class="rule-content">
-      <div
-        style="
-          margin-bottom: 20px;
-          padding-bottom: 10px;
-          border-bottom: 1px solid #eee;
-        "
-      >
-        <h2 style="margin: 0; font-size: 24px; color: #333">
+      <div class="rule-header">
+        <h2 class="rule-title">
           {{ compInfo.name }} - 比赛规则
         </h2>
       </div>
@@ -17,7 +11,7 @@
 
       <el-divider />
 
-      <p style="color: #909399; font-size: 14px">
+      <p class="disclaimer-text">
         中国魔方赛事网是信息发布平台。我们不是赛事主办方，因此不对比赛具体实施负责。
       </p>
     </div>
@@ -31,6 +25,31 @@ const props = defineProps(["compInfo"]);
 </script>
 
 <style scoped>
+/* --- 新提取的样式 --- */
+
+/* 规则标题容器 */
+.rule-header {
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+/* 规则标题文字 */
+.rule-title {
+  margin: 0;
+  font-size: 24px;
+  color: #333;
+}
+
+/* 底部免责声明 */
+.disclaimer-text {
+  color: #909399;
+  font-size: 14px;
+}
+
+
+/* --- 原有的样式 --- */
+
 /* 虽然你说尽量不改样式，但为了让 v-html 渲染出来的文章（h3, ol, li）不至于太丑，
   加上这些极简的样式是必要的。这不属于“魔改”，而是“基础排版”。
 */

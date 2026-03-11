@@ -1,42 +1,42 @@
 <template>
-  <div style="max-width: 800px; margin: 30px auto">
+  <div class="page-container">
     <el-card v-loading="loading" element-loading-text="正在加载比赛详情...">
       <template #header>
         <div class="card-header">
-          <span style="font-weight: bold; font-size: 18px">
+          <span class="header-title">
             <el-icon><Edit /></el-icon> 申请举办公示比赛
           </span>
         </div>
       </template>
 
       <el-form
-        :model="form"
-        ref="formRef"
-        :rules="rules"
-        label-width="120px"
-        label-position="top"
+          :model="form"
+          ref="formRef"
+          :rules="rules"
+          label-width="120px"
+          label-position="top"
       >
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="赛事名称" prop="name">
               <el-input
-                v-model="form.name"
-                placeholder="例如：2025年WCA西安公开赛"
+                  v-model="form.name"
+                  placeholder="例如：2025年WCA西安公开赛"
               />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="赛事代号 (Slug)" prop="slug">
               <el-input
-                v-model="form.slug"
-                placeholder="英文与数字，如：Xian-Open-2025"
-                :disabled="isEditMode" 
+                  v-model="form.slug"
+                  placeholder="英文与数字，如：Xian-Open-2025"
+                  :disabled="isEditMode"
               >
                 <template #prepend>cubing.com/</template>
               </el-input>
-              
-              <small style="color: #999">
-                 {{ isEditMode ? '赛事代号创建后不可修改' : '这将作为比赛的专属链接，不可重复' }}
+
+              <small class="slug-hint">
+                {{ isEditMode ? '赛事代号创建后不可修改' : '这将作为比赛的专属链接，不可重复' }}
               </small>
             </el-form-item>
           </el-col>
@@ -46,26 +46,26 @@
           <el-col :span="12">
             <el-form-item label="所在地区" prop="selectedLocation">
               <el-cascader
-                v-model="form.selectedLocation"
-                :options="cityData"
-                placeholder="请选择省份 / 城市"
-                style="width: 100%"
-                separator=" / "
-                @change="handleLocationChange"
+                  v-model="form.selectedLocation"
+                  :options="cityData"
+                  placeholder="请选择省份 / 城市"
+                  style="width: 100%"
+                  separator=" / "
+                  @change="handleLocationChange"
               />
-              <div v-if="isEditMode && form.selectedLocation.length === 0 && form.province" 
-                   style="font-size: 12px; color: #E6A23C; line-height: 1.5; margin-top: 5px;">
-                <el-icon style="vertical-align: middle"><Location /></el-icon>
+              <div v-if="isEditMode && form.selectedLocation.length === 0 && form.province"
+                   class="location-hint">
+                <el-icon class="icon-middle"><Location /></el-icon>
                 当前已存地区：<strong>{{ form.province }} / {{ form.city }}</strong>
-                <div style="color: #999">如需修改，请在上方重新选择；不操作则保持原样。</div>
+                <div class="location-hint-text">如需修改，请在上方重新选择；不操作则保持原样。</div>
               </div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="具体场馆" prop="location">
               <el-input
-                v-model="form.location"
-                placeholder="区/县 + 街道 + 建筑名"
+                  v-model="form.location"
+                  placeholder="区/县 + 街道 + 建筑名"
               />
             </el-form-item>
           </el-col>
@@ -75,24 +75,24 @@
           <el-col :span="12">
             <el-form-item label="比赛日期" prop="dateRange">
               <el-date-picker
-                v-model="form.dateRange"
-                type="daterange"
-                range-separator="至"
-                start-placeholder="开始日期"
-                end-placeholder="结束日期"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-                :disabled-date="disabledDate"
+                  v-model="form.dateRange"
+                  type="daterange"
+                  range-separator="至"
+                  start-placeholder="开始日期"
+                  end-placeholder="结束日期"
+                  value-format="YYYY-MM-DD"
+                  style="width: 100%"
+                  :disabled-date="disabledDate"
               />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="报名人数限制" prop="competitorLimit">
               <el-input-number
-                v-model="form.competitorLimit"
-                :min="1"
-                :max="1000"
-                style="width: 100%"
+                  v-model="form.competitorLimit"
+                  :min="1"
+                  :max="1000"
+                  style="width: 100%"
               />
             </el-form-item>
           </el-col>
@@ -101,11 +101,11 @@
         <el-form-item label="开设项目" prop="eventIds">
           <el-checkbox-group v-model="form.eventIds">
             <el-checkbox
-              v-for="evt in eventList"
-              :key="evt.id"
-              :label="evt.id"
-              border
-              style="margin-right: 10px; margin-bottom: 10px"
+                v-for="evt in eventList"
+                :key="evt.id"
+                :label="evt.id"
+                border
+                class="event-checkbox"
             >
               {{ evt.name }}
             </el-checkbox>
@@ -122,11 +122,11 @@
 
         <el-form-item>
           <el-button
-            type="primary"
-            size="large"
-            @click="submitForm"
-            :loading="loading"
-            >提交申请</el-button
+              type="primary"
+              size="large"
+              @click="submitForm"
+              :loading="loading"
+          >提交申请</el-button
           >
           <el-button size="large" @click="$router.back()">取消</el-button>
         </el-form-item>
@@ -178,9 +178,9 @@ const rules = {
   name: [{ required: true, message: "请输入名称", trigger: "blur" }],
   slug: [{ required: true, message: "请输入代号", trigger: "blur" }],
   selectedLocation: [
-    { 
-      required: true, 
-      message: "请选择省市", 
+    {
+      required: true,
+      message: "请选择省市",
       trigger: "change",
       validator: (rule, value, callback) => {
         // 编辑模式下，如果已有province和city，则跳过验证
@@ -218,8 +218,8 @@ const handleLocationChange = (value) => {
     const cityCode = value[1];
     const provinceItem = cityData.find((item) => item.value === provinceCode);
     const cityItem = provinceItem
-      ? provinceItem.children.find((item) => item.value === cityCode)
-      : null;
+        ? provinceItem.children.find((item) => item.value === cityCode)
+        : null;
     if (provinceItem && cityItem) {
       form.province = provinceItem.label;
       form.city = cityItem.label;
@@ -231,13 +231,13 @@ const handleLocationChange = (value) => {
 const loadDetail = async (slug) => {
   try {
     loading.value = true;
-    
+
     // 修复点1：并行请求比赛详情 + 比赛项目
     const compRes = await getCompetitionBySlug(slug);
-    
+
     if (compRes.data.code === 200) {
       const data = compRes.data.data;
-      
+
       // 检查权限：只有自己或驳回状态才能改 (前端简单防一下，后端有兜底)
       if (data.status !== 4 && data.status !== 0) {
         ElMessage.warning("当前状态不可修改");
@@ -267,7 +267,7 @@ const loadDetail = async (slug) => {
       // 如果用户不重新选择，提交时会用 form.province 和 form.city
       // 如果用户重新选择了，handleLocationChange 会覆盖这两个值
       form.selectedLocation = []; // Cascader置空，但province/city已赋值
-      
+
       // 修复点2：立即加载项目列表（在同一个 try 块内）
       const eventRes = await getCompetitionEvents(data.id);
       if (eventRes.data.code === 200) {
@@ -292,7 +292,7 @@ const loadDetail = async (slug) => {
 
 const submitForm = async () => {
   if (!formRef.value) return;
-  
+
   await formRef.value.validate(async (valid) => {
     if (valid) {
       if (!userStore.userInfo.id) return ElMessage.error("请先登录");
@@ -300,7 +300,7 @@ const submitForm = async () => {
       loading.value = true;
       try {
         const now = new Date();
-        
+
         const localNow = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 19);
 
         // 构造提交数据
@@ -308,15 +308,15 @@ const submitForm = async () => {
           ...form,
           startDate: form.dateRange[0],
           endDate: form.dateRange[1],
-          
+
           // 如果是编辑模式(isEditMode=true)且原数据有regStartTime，则保持原样
           // 如果是新增模式，或者原数据为空，则使用当前时间(localNow)作为报名开始时间
-          regStartTime: form.regStartTime || localNow, 
-          
+          regStartTime: form.regStartTime || localNow,
+
           // 报名截止时间默认为比赛开始当天的 00:00:00
           regEndTime: form.regEndTime || (form.dateRange[0] + "T23:59:59"),
         };
-        
+
         // 删除多余字段
         delete payload.selectedLocation;
         delete payload.dateRange;
@@ -348,10 +348,46 @@ const submitForm = async () => {
 };
 
 onMounted(() => {
-    // 检查是否有 slug 参数
-    const slug = route.query.slug;
-    if (slug) {
-        loadDetail(slug);
-    }
+  // 检查是否有 slug 参数
+  const slug = route.query.slug;
+  if (slug) {
+    loadDetail(slug);
+  }
 });
 </script>
+
+<style scoped>
+.page-container {
+  max-width: 800px;
+  margin: 30px auto;
+}
+
+.header-title {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.slug-hint {
+  color: #999;
+}
+
+.location-hint {
+  font-size: 12px;
+  color: #E6A23C;
+  line-height: 1.5;
+  margin-top: 5px;
+}
+
+.icon-middle {
+  vertical-align: middle;
+}
+
+.location-hint-text {
+  color: #999;
+}
+
+.event-checkbox {
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+</style>

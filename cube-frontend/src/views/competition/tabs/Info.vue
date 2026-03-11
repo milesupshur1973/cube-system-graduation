@@ -3,7 +3,7 @@
     <el-descriptions border :column="1" size="large" class="comp-info-list">
       <el-descriptions-item label="赛事规则">
         <el-tag type="primary" effect="plain">WCA 规则标准</el-tag>
-        <span style="margin-left: 10px; font-size: 13px; color: #666">
+        <span class="rule-desc">
           本场比赛严格执行 WCA 竞赛规则
         </span>
       </el-descriptions-item>
@@ -18,7 +18,7 @@
 
       <el-descriptions-item label="主办方">
         <el-link type="primary" :underline="false">
-          <el-icon style="margin-right: 4px"><User /></el-icon>
+          <el-icon class="icon-margin"><User /></el-icon>
           {{ organizerName }}
         </el-link>
       </el-descriptions-item>
@@ -26,8 +26,8 @@
       <el-descriptions-item label="开设项目">
         <el-space wrap>
           <el-tag v-for="item in events" :key="item.id" effect="plain">{{
-            item.name
-          }}</el-tag>
+              item.name
+            }}</el-tag>
           <el-tag v-if="events.length === 0" type="info">暂无项目数据</el-tag>
         </el-space>
       </el-descriptions-item>
@@ -38,17 +38,17 @@
       </el-descriptions-item>
 
       <el-descriptions-item label="人数限制">
-        <span style="font-weight: bold; color: #f56c6c"
-          >{{ compInfo.competitorLimit }} 人</span
+        <span class="limit-text"
+        >{{ compInfo.competitorLimit }} 人</span
         >
       </el-descriptions-item>
 
       <el-descriptions-item label="关于比赛">
         <div
-          class="rich-text-content"
-          v-html="
+            class="rich-text-content"
+            v-html="
             compInfo.contentDescription ||
-            '<p style=\'color:#999\'>暂无详细介绍</p>'
+            '<p class=\'empty-desc\'>暂无详细介绍</p>'
           "
         ></div>
       </el-descriptions-item>
@@ -101,16 +101,34 @@ const loadData = async () => {
 };
 
 watch(
-  () => props.compInfo,
-  (newVal) => {
-    if (newVal.id) loadData();
-  },
-  { immediate: true }
+    () => props.compInfo,
+    (newVal) => {
+      if (newVal.id) loadData();
+    },
+    { immediate: true }
 );
 </script>
 
 <style scoped>
-/* 保持原有样式不变 */
+/* 赛事规则说明文本 */
+.rule-desc {
+  margin-left: 10px;
+  font-size: 13px;
+  color: #666;
+}
+
+/* 图标右侧边距 */
+.icon-margin {
+  margin-right: 4px;
+}
+
+/* 人数限制醒目文本 */
+.limit-text {
+  font-weight: bold;
+  color: #f56c6c;
+}
+
+/* 保持原有富文本样式不变 */
 .rich-text-content {
   line-height: 1.6;
   color: #333;
@@ -138,5 +156,10 @@ watch(
 }
 .rich-text-content :deep(p) {
   margin-bottom: 10px;
+}
+
+/* 动态插入的暂无介绍空文本样式 */
+.rich-text-content :deep(.empty-desc) {
+  color: #999;
 }
 </style>

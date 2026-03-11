@@ -1,48 +1,40 @@
 <template>
-  <div style="max-width: 1100px; margin: 20px auto; padding: 0 15px">
-    <div
-      style="
-        margin-bottom: 20px;
-        background: #fff;
-        padding: 20px;
-        border-radius: 4px;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-      "
-    >
-      <h2 style="margin-top: 0; color: #409eff; margin-bottom: 20px">
+  <div class="page-container">
+    <div class="filter-container">
+      <h2 class="title-header">
         <el-icon><Trophy /></el-icon> 纪录排名
       </h2>
 
       <el-form :inline="true">
         <el-form-item label="项目">
           <el-select
-            v-model="queryParams.eventId"
-            placeholder="请选择项目"
-            style="width: 130px"
+              v-model="queryParams.eventId"
+              placeholder="请选择项目"
+              class="filter-select"
           >
             <el-option
-              v-for="evt in eventList"
-              :key="evt.id"
-              :label="evt.name"
-              :value="evt.id"
+                v-for="evt in eventList"
+                :key="evt.id"
+                :label="evt.name"
+                :value="evt.id"
             />
           </el-select>
         </el-form-item>
 
         <el-form-item label="地区">
           <el-select
-            v-model="queryParams.region"
-            placeholder="全国"
-            @change="handleFilter"
-            clearable
-            style="width: 130px"
+              v-model="queryParams.region"
+              placeholder="全国"
+              @change="handleFilter"
+              clearable
+              class="filter-select"
           >
             <el-option label="全国" value="" />
             <el-option
-              v-for="item in provinceOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.label"
+                v-for="item in provinceOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.label"
             />
           </el-select>
         </el-form-item>
@@ -56,19 +48,19 @@
 
         <el-form-item>
           <el-button type="primary" @click="loadData" :loading="loading"
-            >刷新</el-button
+          >刷新</el-button
           >
         </el-form-item>
       </el-form>
     </div>
 
     <el-card shadow="never">
-      <el-table :data="rankList" v-loading="loading" stripe style="width: 100%">
+      <el-table :data="rankList" v-loading="loading" stripe class="rank-table">
         <el-table-column prop="rank" label="排名" width="80" align="center">
           <template #default="scope">
             <span
-              v-if="scope.row.rank <= 3"
-              style="font-weight: bold; color: #f56c6c; font-size: 16px"
+                v-if="scope.row.rank <= 3"
+                class="top-rank"
             >
               #{{ scope.row.rank }}
             </span>
@@ -79,9 +71,9 @@
         <el-table-column label="姓名" min-width="120">
           <template #default="scope">
             <el-link
-              :underline="false"
-              type="primary"
-              @click="
+                :underline="false"
+                type="primary"
+                @click="
                 $router.push(`/results/person/${scope.row.userDisplayId}`)
               "
             >
@@ -95,9 +87,7 @@
 
         <el-table-column label="成绩" width="120" align="right">
           <template #default="scope">
-            <span
-              style="font-weight: bold; font-family: monospace; font-size: 15px"
-            >
+            <span class="score-text">
               {{ formatTime(scope.row.bestScore) }}
             </span>
           </template>
@@ -106,29 +96,29 @@
         <el-table-column label="赛事" min-width="200" align="right">
           <template #default="scope">
             <el-link
-              :underline="false"
-              type="info"
-              style="font-size: 12px"
-              @click="$router.push(`/competition/${scope.row.competitionSlug}`)"
+                :underline="false"
+                type="info"
+                class="comp-link"
+                @click="$router.push(`/competition/${scope.row.competitionSlug}`)"
             >
               {{ scope.row.competitionName }}
             </el-link>
-            <div style="font-size: 12px; color: #ccc">
+            <div class="comp-date">
               {{ scope.row.competitionDate }}
             </div>
           </template>
         </el-table-column>
       </el-table>
-      <div style="padding: 20px; display: flex; justify-content: flex-end">
+      <div class="pagination-container">
         <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[20, 50, 100]"
-          :total="total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleFilter"
-          @current-change="handleCurrentChange"
-          background
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :page-sizes="[20, 50, 100]"
+            :total="total"
+            layout="total, sizes, prev, pager, next, jumper"
+            @size-change="handleFilter"
+            @current-change="handleCurrentChange"
+            background
         />
       </div>
     </el-card>
@@ -214,19 +204,19 @@ const handleCurrentChange = (val) => {
 
 // 2. 添加监听逻辑
 watch(
-  () => queryParams.eventId,
-  (newId) => {
-    // 从 store 的列表中找到当前选中的项目对象
-    const targetEvent = eventList.value.find((e) => e.id === newId);
+    () => queryParams.eventId,
+    (newId) => {
+      // 从 store 的列表中找到当前选中的项目对象
+      const targetEvent = eventList.value.find((e) => e.id === newId);
 
-    if (targetEvent) {
-      if (targetEvent.format === "bo3") {
-        queryParams.type = "best";
+      if (targetEvent) {
+        if (targetEvent.format === "bo3") {
+          queryParams.type = "best";
+        }
       }
+      currentPage.value = 1;
+      loadData();
     }
-    currentPage.value = 1;
-    loadData();
-  }
 );
 
 const handleFilter = () => {
@@ -238,3 +228,60 @@ onMounted(() => {
   loadData();
 });
 </script>
+
+<style scoped>
+.page-container {
+  max-width: 1100px;
+  margin: 20px auto;
+  padding: 0 15px;
+}
+
+.filter-container {
+  margin-bottom: 20px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.title-header {
+  margin-top: 0;
+  color: #409eff;
+  margin-bottom: 20px;
+}
+
+.filter-select {
+  width: 130px;
+}
+
+.rank-table {
+  width: 100%;
+}
+
+.top-rank {
+  font-weight: bold;
+  color: #f56c6c;
+  font-size: 16px;
+}
+
+.score-text {
+  font-weight: bold;
+  font-family: monospace;
+  font-size: 15px;
+}
+
+.comp-link {
+  font-size: 12px;
+}
+
+.comp-date {
+  font-size: 12px;
+  color: #ccc;
+}
+
+.pagination-container {
+  padding: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+</style>

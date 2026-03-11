@@ -2,39 +2,39 @@
   <div>
     <div class="ai-float-btn" @click="dialogVisible = true">
       <el-icon size="24"><ChatDotRound /></el-icon>
-      <span style="font-size: 12px; margin-left: 4px;">AI助手</span>
+      <span class="btn-text">AI助手</span>
     </div>
 
     <el-dialog
-      v-model="dialogVisible"
-      title="魔方赛事智能助手"
-      width="400px"
-      :close-on-click-modal="false"
-      class="ai-dialog"
+        v-model="dialogVisible"
+        title="魔方赛事智能助手"
+        width="400px"
+        :close-on-click-modal="false"
+        class="ai-dialog"
     >
       <div class="chat-box" ref="chatBoxRef">
-        <div v-for="(msg, index) in messages" :key="index" 
+        <div v-for="(msg, index) in messages" :key="index"
              :class="['message-row', msg.role === 'user' ? 'msg-right' : 'msg-left']">
-          
-          <el-avatar 
-            v-if="msg.role === 'ai'" 
-            :size="30" 
-            icon="Service" 
-            style="background-color: #409EFF; color: white;" 
+
+          <el-avatar
+              v-if="msg.role === 'ai'"
+              :size="30"
+              icon="Service"
+              class="ai-avatar"
           />
-          
+
           <div class="message-content">
             {{ msg.content }}
           </div>
 
           <el-avatar v-if="msg.role === 'user'" :size="30" icon="UserFilled" />
         </div>
-        
+
         <div v-if="loading" class="message-row msg-left">
-          <el-avatar 
-            :size="30" 
-            icon="Service" 
-            style="background-color: #409EFF; color: white;" 
+          <el-avatar
+              :size="30"
+              icon="Service"
+              class="ai-avatar"
           />
           <div class="message-content">
             <span class="dot">...</span>
@@ -44,10 +44,10 @@
 
       <div class="input-area">
         <el-input
-          v-model="inputMsg"
-          placeholder="问问我关于魔方的问题..."
-          @keyup.enter="sendMessage"
-          :disabled="loading"
+            v-model="inputMsg"
+            placeholder="问问我关于魔方的问题..."
+            @keyup.enter="sendMessage"
+            :disabled="loading"
         >
           <template #append>
             <el-button @click="sendMessage" :loading="loading">发送</el-button>
@@ -87,19 +87,15 @@ const sendMessage = async () => {
   loading.value = true
   try {
     const res = await request.post('/ai/chat', question, {
-        headers: { 'Content-Type': 'text/plain' }
+      headers: { 'Content-Type': 'text/plain' }
     })
-    
-    // ✅ 修复点：先解包！
-    // axios 返回的 res.data 才是我们的 Result 对象
-    const result = res.data; 
 
-    // ✅ 修复点：使用解包后的 result 变量进行判断
+    const result = res.data;
+
     if (result.code === 200) {
-       messages.value.push({ role: 'ai', content: result.data })
+      messages.value.push({ role: 'ai', content: result.data })
     } else {
-       // 如果出错，显示后端返回的具体 msg
-       messages.value.push({ role: 'ai', content: result.msg || '抱歉，我好像出故障了。' })
+      messages.value.push({ role: 'ai', content: result.msg || '抱歉，我好像出故障了。' })
     }
   } catch (error) {
     messages.value.push({ role: 'ai', content: '网络连接失败，请稍后再试。' })
@@ -139,9 +135,21 @@ const scrollToBottom = () => {
   z-index: 9999;
   transition: all 0.3s;
 }
+
 .ai-float-btn:hover {
   transform: scale(1.1);
   background-color: #66b1ff;
+}
+
+.btn-text {
+  font-size: 12px;
+  margin-left: 4px;
+}
+
+/* AI 头像专用样式 */
+.ai-avatar {
+  background-color: #409EFF;
+  color: white;
 }
 
 /* 聊天框样式 */
@@ -193,5 +201,10 @@ const scrollToBottom = () => {
 
 .input-area {
   margin-top: 10px;
+}
+
+/* 加载动画的小点样式（可选） */
+.dot {
+  font-weight: bold;
 }
 </style>

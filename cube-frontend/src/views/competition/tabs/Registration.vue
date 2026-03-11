@@ -1,26 +1,26 @@
 <template>
-  <div style="padding: 20px">
+  <div class="registration-container">
     <div
-      v-if="!userStore.userInfo.id"
-      style="text-align: center; margin-top: 50px"
+        v-if="!userStore.userInfo.id"
+        class="empty-state"
     >
       <el-empty description="请先登录后报名">
         <el-button type="primary" @click="$router.push('/login')"
-          >去登录</el-button
+        >去登录</el-button
         >
       </el-empty>
     </div>
 
-    <div v-else-if="compInfo.status !== 1" style="text-align: center; margin-top: 50px">
+    <div v-else-if="compInfo.status !== 1" class="empty-state">
       <el-empty :description="getStatusText(compInfo.status)" />
     </div>
 
-    <div v-else style="max-width: 800px; margin: 0 auto">
-      <div style="text-align: center; margin-bottom: 30px">
-        <h2 style="color: #409eff">
+    <div v-else class="main-content">
+      <div class="header-text">
+        <h2 class="title-text">
           {{ isUpdate ? "修改报名信息" : "在线报名" }}
         </h2>
-        <p style="color: #666; font-size: 14px">
+        <p class="time-text">
           报名时间：{{ formatDate(compInfo.regStartTime) }} ~
           {{ formatDate(compInfo.regEndTime) }}
         </p>
@@ -28,23 +28,24 @@
 
       <el-card shadow="never">
         <template #header>
-          <div style="font-weight: bold">请选择参赛项目</div>
+          <div class="card-header">请选择参赛项目</div>
         </template>
 
         <el-form label-position="top">
           <el-form-item>
-            <el-checkbox-group v-model="selectedEvents">
+            <el-checkbox-group v-model="selectedEvents" style="width: 100%">
               <el-row :gutter="20">
                 <el-col
-                  :span="6"
-                  v-for="event in allEvents"
-                  :key="event.eventId"
-                  style="margin-bottom: 15px"
+                    :span="6"
+                    v-for="event in allEvents"
+                    :key="event.eventId"
+                    class="checkbox-col"
                 >
                   <el-checkbox
-                    :label="event.eventId"
-                    border
-                    style="width: 100%"
+                      :label="event.eventId"
+                      border
+                      class="event-checkbox"
+                      :title="getEventName(event.eventId)"
                   >
                     {{ getEventName(event.eventId) }}
                   </el-checkbox>
@@ -55,43 +56,28 @@
 
           <el-divider />
 
-          <div
-            style="
-              display: flex;
-              justify-content: flex-end;
-              gap: 10px;
-              align-items: center;
-            "
-          >
-            <div style="margin-right: auto;">
-              <span style="color: #666">已选项目数：</span>
-              <span
-                style="
-                  font-weight: bold;
-                  font-size: 18px;
-                  color: #f56c6c;
-                  margin-right: 10px;
-                "
-              >
+          <div class="action-bar">
+            <div class="count-info">
+              <span class="count-label">已选项目数：</span>
+              <span class="count-number">
                 {{ selectedEvents.length }}
               </span>
             </div>
 
-            <!-- 取消报名按钮 -->
             <el-button
-              v-if="isUpdate"
-              type="danger"
-              size="large"
-              @click="handleCancelRegistration"
+                v-if="isUpdate"
+                type="danger"
+                size="large"
+                @click="handleCancelRegistration"
             >
               取消报名
             </el-button>
 
             <el-button
-              type="primary"
-              size="large"
-              @click="handleSubmit"
-              :loading="submitting"
+                type="primary"
+                size="large"
+                @click="handleSubmit"
+                :loading="submitting"
             >
               {{ isUpdate ? "更新报名" : "提交报名" }}
             </el-button>
@@ -99,14 +85,7 @@
         </el-form>
       </el-card>
 
-      <div
-        style="
-          margin-top: 20px;
-          color: #909399;
-          font-size: 13px;
-          line-height: 1.6;
-        "
-      >
+      <div class="tips-area">
         <p>
           <el-icon><InfoFilled /></el-icon> 说明：
         </p>
@@ -176,8 +155,8 @@ const checkMyRegistration = async () => {
   if (!userStore.userInfo.id || !props.compInfo.id) return;
   try {
     const res = await getMyRegistration(
-      props.compInfo.id,
-      userStore.userInfo.id
+        props.compInfo.id,
+        userStore.userInfo.id
     );
     if (res.data.code === 200 && res.data.data) {
       selectedEvents.value = res.data.data.eventIds || [];
@@ -197,7 +176,7 @@ const handleSubmit = async () => {
   if (isUpdate.value && selectedEvents.value.length === 0) {
     return handleCancelRegistration();
   }
-  
+
   // 原有的验证逻辑，仅对首次报名生效
   if (selectedEvents.value.length === 0) {
     return ElMessage.warning("请至少选择一个项目！");
@@ -206,9 +185,9 @@ const handleSubmit = async () => {
   // 简单的二次确认
   try {
     await ElMessageBox.confirm(
-      `您已选择 ${selectedEvents.value.length} 个项目，确定提交吗？`,
-      "确认报名",
-      { confirmButtonText: "确定", cancelButtonText: "取消", type: "info" }
+        `您已选择 ${selectedEvents.value.length} 个项目，确定提交吗？`,
+        "确认报名",
+        { confirmButtonText: "确定", cancelButtonText: "取消", type: "info" }
     );
   } catch {
     return; // 用户点了取消
@@ -240,9 +219,9 @@ const handleSubmit = async () => {
 const handleCancelRegistration = async () => {
   try {
     await ElMessageBox.confirm(
-      "确定要取消报名吗？此操作不可恢复。",
-      "取消报名",
-      { confirmButtonText: "确定", cancelButtonText: "取消", type: "warning" }
+        "确定要取消报名吗？此操作不可恢复。",
+        "取消报名",
+        { confirmButtonText: "确定", cancelButtonText: "取消", type: "warning" }
     );
   } catch {
     return; // 用户点了取消
@@ -269,13 +248,107 @@ const handleCancelRegistration = async () => {
 
 // 监听 compInfo 变化，一旦有 ID 了就加载数据
 watch(
-  () => props.compInfo,
-  (newVal) => {
-    if (newVal.id) {
-      loadEvents();
-      checkMyRegistration();
-    }
-  },
-  { immediate: true }
+    () => props.compInfo,
+    (newVal) => {
+      if (newVal.id) {
+        loadEvents();
+        checkMyRegistration();
+      }
+    },
+    { immediate: true }
 );
 </script>
+
+<style scoped>
+/* 最外层容器 */
+.registration-container {
+  padding: 20px;
+}
+
+/* 空状态（未登录/未开放报名） */
+.empty-state {
+  text-align: center;
+  margin-top: 50px;
+}
+
+/* 主内容区限制宽度居中 */
+.main-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* 顶部标题区域 */
+.header-text {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.title-text {
+  color: #409eff;
+}
+
+.time-text {
+  color: #666;
+  font-size: 14px;
+}
+
+/* 卡片标题 */
+.card-header {
+  font-weight: bold;
+}
+
+/* 多选框列间距 */
+.checkbox-col {
+  margin-bottom: 15px;
+}
+
+/* 修复多选框文本溢出问题：
+  1. 将 checkbox 设为 flex 布局并限制 100% 宽度
+  2. 穿透修改内部 label 的样式，使其支持单行省略号截断
+*/
+.event-checkbox {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.event-checkbox :deep(.el-checkbox__label) {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-left: 8px; /* 根据 Element Plus 默认样式微调，防止贴太紧 */
+}
+
+/* 底部操作栏 */
+.action-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  align-items: center;
+}
+
+/* 已选项目信息（靠左） */
+.count-info {
+  margin-right: auto;
+}
+
+.count-label {
+  color: #666;
+}
+
+.count-number {
+  font-weight: bold;
+  font-size: 18px;
+  color: #f56c6c;
+  margin-right: 10px;
+}
+
+/* 底部说明提示区 */
+.tips-area {
+  margin-top: 20px;
+  color: #909399;
+  font-size: 13px;
+  line-height: 1.6;
+}
+</style>

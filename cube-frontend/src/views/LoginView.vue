@@ -9,35 +9,35 @@
       <el-tabs v-model="activeTab" class="login-tabs" stretch>
         <el-tab-pane label="登录" name="login">
           <el-form
-            :model="loginForm"
-            ref="loginFormRef"
-            :rules="rules"
-            label-width="0"
+              :model="loginForm"
+              ref="loginFormRef"
+              :rules="rules"
+              label-width="0"
           >
             <el-form-item prop="email">
               <el-input
-                v-model="loginForm.email"
-                placeholder="请输入邮箱"
-                prefix-icon="Message"
-                size="large"
+                  v-model="loginForm.email"
+                  placeholder="请输入邮箱"
+                  prefix-icon="Message"
+                  size="large"
               />
             </el-form-item>
             <el-form-item prop="password">
               <el-input
-                v-model="loginForm.password"
-                type="password"
-                placeholder="请输入密码"
-                prefix-icon="Lock"
-                size="large"
-                show-password
+                  v-model="loginForm.password"
+                  type="password"
+                  placeholder="请输入密码"
+                  prefix-icon="Lock"
+                  size="large"
+                  show-password
               />
             </el-form-item>
             <el-button
-              type="primary"
-              style="width: 100%"
-              size="large"
-              @click="handleLogin"
-              :loading="loading"
+                type="primary"
+                class="full-width"
+                size="large"
+                @click="handleLogin"
+                :loading="loading"
             >
               立即登录
             </el-button>
@@ -46,45 +46,45 @@
 
         <el-tab-pane label="注册" name="register">
           <el-form
-            :model="regForm"
-            ref="regFormRef"
-            :rules="rules"
-            label-width="0"
+              :model="regForm"
+              ref="regFormRef"
+              :rules="rules"
+              label-width="0"
           >
             <el-form-item prop="name">
               <el-input
-                v-model="regForm.name"
-                placeholder="真实姓名 (用于比赛)"
-                prefix-icon="User"
-                size="large"
+                  v-model="regForm.name"
+                  placeholder="真实姓名 (用于比赛)"
+                  prefix-icon="User"
+                  size="large"
               />
             </el-form-item>
 
             <el-form-item prop="email">
               <el-input
-                v-model="regForm.email"
-                placeholder="邮箱"
-                prefix-icon="Message"
-                size="large"
+                  v-model="regForm.email"
+                  placeholder="邮箱"
+                  prefix-icon="Message"
+                  size="large"
               />
             </el-form-item>
 
             <el-form-item prop="password">
               <el-input
-                v-model="regForm.password"
-                type="password"
-                placeholder="设置密码"
-                prefix-icon="Lock"
-                size="large"
+                  v-model="regForm.password"
+                  type="password"
+                  placeholder="设置密码"
+                  prefix-icon="Lock"
+                  size="large"
               />
             </el-form-item>
 
             <el-form-item prop="gender">
               <el-select
-                v-model="regForm.gender"
-                placeholder="请选择性别"
-                style="width: 100%"
-                size="large"
+                  v-model="regForm.gender"
+                  placeholder="请选择性别"
+                  class="full-width"
+                  size="large"
               >
                 <el-option label="男" value="M" />
                 <el-option label="女" value="F" />
@@ -93,22 +93,22 @@
 
             <el-form-item prop="location">
               <el-cascader
-                v-model="selectedLocation"
-                :options="cityData"
-                placeholder="请选择省份 / 城市"
-                @change="handleLocationChange"
-                style="width: 100%"
-                size="large"
-                separator=" / "
+                  v-model="selectedLocation"
+                  :options="cityData"
+                  placeholder="请选择省份 / 城市"
+                  @change="handleLocationChange"
+                  class="full-width"
+                  size="large"
+                  separator=" / "
               />
             </el-form-item>
 
             <el-button
-              type="success"
-              style="width: 100%"
-              size="large"
-              @click="handleRegister"
-              :loading="loading"
+                type="success"
+                class="full-width"
+                size="large"
+                @click="handleRegister"
+                :loading="loading"
             >
               注册账号
             </el-button>
@@ -170,8 +170,8 @@ const handleLocationChange = (value) => {
 
     const provinceItem = cityData.find((item) => item.value === provinceCode);
     const cityItem = provinceItem
-      ? provinceItem.children.find((item) => item.value === cityCode)
-      : null;
+        ? provinceItem.children.find((item) => item.value === cityCode)
+        : null;
 
     if (provinceItem && cityItem) {
       regForm.province = provinceItem.label;
@@ -206,10 +206,10 @@ const handleLogin = async () => {
 // 处理注册 (已修改为调用 API)
 const handleRegister = async () => {
   if (
-    !regForm.name ||
-    !regForm.email ||
-    !regForm.password ||
-    !regForm.province
+      !regForm.name ||
+      !regForm.email ||
+      !regForm.password ||
+      !regForm.province
   ) {
     return ElMessage.warning("请填写完整的注册信息（含省市）");
   }
@@ -240,12 +240,19 @@ const handleRegister = async () => {
   align-items: center;
   height: 80vh;
 }
+
 .login-card {
   width: 450px;
   border-radius: 10px;
 }
+
 .login-header {
   text-align: center;
   margin-bottom: 20px;
+}
+
+/* 统一的满宽样式类，替代原先的内联样式 */
+.full-width {
+  width: 100%;
 }
 </style>

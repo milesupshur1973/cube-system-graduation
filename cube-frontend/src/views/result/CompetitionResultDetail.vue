@@ -4,7 +4,7 @@
       <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
       <el-breadcrumb-item>成绩</el-breadcrumb-item>
       <el-breadcrumb-item :to="{ path: '/results/competition' }"
-        >赛事</el-breadcrumb-item
+      >赛事</el-breadcrumb-item
       >
       <el-breadcrumb-item>{{ compInfo.name }}</el-breadcrumb-item>
     </el-breadcrumb>
@@ -13,24 +13,24 @@
       <el-descriptions :title="compInfo.name" :column="3" border>
         <template #extra>
           <el-button
-            type="primary"
-            link
-            @click="$router.push(`/competition/${compInfo.slug}/competitors`)"
+              type="primary"
+              link
+              @click="$router.push(`/competition/${compInfo.slug}/competitors`)"
           >
             查看选手名单
           </el-button>
         </template>
         <el-descriptions-item label="日期">{{
-          compInfo.startDate
-        }}</el-descriptions-item>
+            compInfo.startDate
+          }}</el-descriptions-item>
         <el-descriptions-item label="地点"
-          >{{ compInfo.province }} - {{ compInfo.city }}</el-descriptions-item
+        >{{ compInfo.province }} - {{ compInfo.city }}</el-descriptions-item
         >
         <el-descriptions-item label="链接">
           <el-link
-            type="primary"
-            :href="`/competition/${compInfo.slug}`"
-            target="_blank"
+              type="primary"
+              :href="`/competition/${compInfo.slug}`"
+              target="_blank"
           >
             赛事主页 <el-icon><TopRight /></el-icon>
           </el-link>
@@ -47,17 +47,17 @@
         </el-radio-group>
 
         <el-select
-          v-if="viewMode === 'all'"
-          v-model="activeEventId"
-          placeholder="选择项目"
-          class="event-select"
-          @change="handleViewChange"
+            v-if="viewMode === 'all'"
+            v-model="activeEventId"
+            placeholder="选择项目"
+            class="event-select"
+            @change="handleViewChange"
         >
           <el-option
-            v-for="evt in eventList"
-            :key="evt.eventId"
-            :label="evt.eventName"
-            :value="evt.eventId"
+              v-for="evt in eventList"
+              :key="evt.eventId"
+              :label="evt.eventName"
+              :value="evt.eventId"
           />
         </el-select>
       </el-space>
@@ -67,23 +67,23 @@
       <el-card shadow="never" v-if="viewMode === 'all'">
         <template #header>
           <span class="card-header-text"
-            >{{ eventStore.getEventName(activeEventId) }} - 完整排名</span
+          >{{ eventStore.getEventName(activeEventId) }} - 完整排名</span
           >
         </template>
-        <el-table :data="allResultsData" stripe style="width: 100%">
+        <el-table :data="allResultsData" stripe class="full-width-table">
           <el-table-column label="排名" width="80" align="center">
             <template #default="scope">
               <span v-if="scope.row.rank <= 3" class="rank-highlight">{{
-                scope.row.rank
-              }}</span>
+                  scope.row.rank
+                }}</span>
               <span v-else>{{ scope.row.rank }}</span>
             </template>
           </el-table-column>
           <el-table-column label="选手" min-width="160">
             <template #default="scope">
               <el-link
-                type="primary"
-                @click="
+                  type="primary"
+                  @click="
                   $router.push(`/results/person/${scope.row.userDisplayId}`)
                 "
               >
@@ -99,18 +99,18 @@
           <el-table-column label="平均 (Avg)" width="120" align="right">
             <template #default="scope">
               <span
-                class="time-bold"
-                :class="{ 'text-primary': scope.row.average > 0 }"
+                  class="time-bold"
+                  :class="{ 'text-primary': scope.row.average > 0 }"
               >
                 {{ formatTime(scope.row.average) }}
               </span>
             </template>
           </el-table-column>
           <el-table-column
-            prop="userProvince"
-            label="地区"
-            width="100"
-            align="center"
+              prop="userProvince"
+              label="地区"
+              width="100"
+              align="center"
           />
           <el-table-column label="详情" min-width="280">
             <template #default="scope">
@@ -125,12 +125,10 @@
           <span class="card-header-text">全项目冠军一览</span>
         </template>
 
-        <el-table :data="championData" border stripe style="width: 100%">
+        <el-table :data="championData" border stripe class="full-width-table">
           <el-table-column label="项目" width="140">
             <template #default="scope">
-              <div
-                style="display: flex; align-items: center; font-weight: bold"
-              >
+              <div class="event-name-wrapper">
                 <el-icon class="header-icon"><Grid /></el-icon>
                 {{ scope.row.eventName }}
               </div>
@@ -140,8 +138,8 @@
           <el-table-column label="选手" min-width="150">
             <template #default="scope">
               <el-link
-                type="primary"
-                @click="
+                  type="primary"
+                  @click="
                   $router.push(`/results/person/${scope.row.userDisplayId}`)
                 "
               >
@@ -159,16 +157,16 @@
           <el-table-column label="平均" width="120" align="right">
             <template #default="scope">
               <span class="time-bold text-primary">{{
-                formatTime(scope.row.average)
-              }}</span>
+                  formatTime(scope.row.average)
+                }}</span>
             </template>
           </el-table-column>
 
           <el-table-column
-            prop="userProvince"
-            label="地区"
-            width="100"
-            align="center"
+              prop="userProvince"
+              label="地区"
+              width="100"
+              align="center"
           />
 
           <el-table-column label="详情" min-width="260">
@@ -181,21 +179,21 @@
 
       <div v-else>
         <el-empty
-          v-if="groupedResults.length === 0 && !loading"
-          description="暂无数据"
+            v-if="groupedResults.length === 0 && !loading"
+            description="暂无数据"
         />
 
         <div
-          v-for="group in groupedResults"
-          :key="group.eventId"
-          class="group-container"
+            v-for="group in groupedResults"
+            :key="group.eventId"
+            class="group-container"
         >
           <div class="group-header">
             <el-icon class="header-icon"><Grid /></el-icon>
             {{ group.eventName }}
           </div>
 
-          <el-table :data="group.rows" border style="width: 100%">
+          <el-table :data="group.rows" border class="full-width-table">
             <el-table-column label="排名" width="80" align="center">
               <template #default="scope">
                 <span v-if="scope.row.rank === 1" class="rank-1">1</span>
@@ -208,8 +206,8 @@
             <el-table-column label="选手">
               <template #default="scope">
                 <el-link
-                  type="primary"
-                  @click="
+                    type="primary"
+                    @click="
                     $router.push(`/results/person/${scope.row.userDisplayId}`)
                   "
                 >
@@ -227,16 +225,16 @@
             <el-table-column label="平均" width="120" align="right">
               <template #default="scope">
                 <span class="time-bold text-primary">{{
-                  formatTime(scope.row.average)
-                }}</span>
+                    formatTime(scope.row.average)
+                  }}</span>
               </template>
             </el-table-column>
 
             <el-table-column
-              prop="userProvince"
-              label="地区"
-              width="100"
-              align="center"
+                prop="userProvince"
+                label="地区"
+                width="100"
+                align="center"
             />
 
             <el-table-column label="详情" min-width="250">
@@ -349,17 +347,17 @@ const loadResults = async () => {
         allResultsData.value = data;
       }
     }
-    // ------------------------------------------------
-    // 情况 2 & 3: 冠军模式 ('winner') 和 前三模式 ('top3')
+        // ------------------------------------------------
+        // 情况 2 & 3: 冠军模式 ('winner') 和 前三模式 ('top3')
     // ------------------------------------------------
     else {
       // 1. 并发请求所有项目的成绩
       const promises = eventList.value.map((evt) =>
-        getResultList(compInfo.value.id, evt.eventId).then((res) => ({
-          eventId: evt.eventId,
-          eventName: evt.eventName,
-          data: res.data.code === 200 ? res.data.data : [],
-        }))
+          getResultList(compInfo.value.id, evt.eventId).then((res) => ({
+            eventId: evt.eventId,
+            eventName: evt.eventName,
+            data: res.data.code === 200 ? res.data.data : [],
+          }))
       );
       const results = await Promise.all(promises);
 
@@ -507,5 +505,19 @@ onMounted(() => {
 .header-icon {
   margin-right: 5px;
   vertical-align: middle;
+}
+
+/* ========== 新增提取的样式 ========== */
+
+/* 撑满全宽的表格 */
+.full-width-table {
+  width: 100%;
+}
+
+/* 冠军视图 - 项目名称容器 */
+.event-name-wrapper {
+  display: flex;
+  align-items: center;
+  font-weight: bold;
 }
 </style>

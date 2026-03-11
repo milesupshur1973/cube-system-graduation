@@ -1,7 +1,7 @@
 <template>
-  <div style="max-width: 1200px; margin: 20px auto; padding: 0 20px">
-    <div style="margin-bottom: 20px">
-      <h2 style="color: #409eff; display: inline-block; margin-right: 20px">
+  <div class="page-container">
+    <div class="header-container">
+      <h2 class="header-title">
         <el-icon><Tickets /></el-icon> 我的赛事中心
       </h2>
     </div>
@@ -10,23 +10,23 @@
       <el-tabs v-model="activeTab" @tab-change="handleTabChange">
         <el-tab-pane label="我报名的比赛" name="joined">
           <el-empty
-            v-if="!loading && joinedList.length === 0"
-            description="您还没有报名任何比赛"
+              v-if="!loading && joinedList.length === 0"
+              description="您还没有报名任何比赛"
           />
 
           <el-table
-            v-else
-            :data="joinedList"
-            v-loading="loading"
-            stripe
-            style="width: 100%"
+              v-else
+              :data="joinedList"
+              v-loading="loading"
+              stripe
+              class="full-width-table"
           >
             <el-table-column label="比赛名称" min-width="250">
               <template #default="scope">
-                <div style="font-weight: bold; font-size: 16px">
+                <div class="comp-name">
                   {{ scope.row.competitionName }}
                 </div>
-                <div style="font-size: 12px; color: #999; margin-top: 5px">
+                <div class="comp-location">
                   <el-icon><Location /></el-icon> {{ scope.row.location }}
                 </div>
               </template>
@@ -41,9 +41,9 @@
             <el-table-column label="报名项目" min-width="200">
               <template #default="scope">
                 <el-tag
-                  type="info"
-                  effect="plain"
-                  style="white-space: normal; height: auto; padding: 5px"
+                    type="info"
+                    effect="plain"
+                    class="event-tag"
                 >
                   {{ scope.row.eventNames || "无项目" }}
                 </el-tag>
@@ -53,10 +53,10 @@
             <el-table-column label="状态" width="100" align="center">
               <template #default="scope">
                 <el-tag v-if="scope.row.status === 1" type="success"
-                  >已通过</el-tag
+                >已通过</el-tag
                 >
                 <el-tag v-else-if="scope.row.status === 0" type="warning"
-                  >审核中</el-tag
+                >审核中</el-tag
                 >
                 <el-tag v-else type="danger">已取消</el-tag>
               </template>
@@ -65,7 +65,7 @@
             <el-table-column label="操作" width="100" align="center">
               <template #default="scope">
                 <el-button link type="primary" @click="goDetail(scope.row.slug)"
-                  >详情</el-button
+                >详情</el-button
                 >
               </template>
             </el-table-column>
@@ -73,32 +73,32 @@
         </el-tab-pane>
 
         <el-tab-pane label="我主办的比赛" name="organized">
-          <div style="text-align: right; margin-bottom: 10px">
+          <div class="action-container">
             <el-button
-              type="primary"
-              size="small"
-              @click="$router.push('/competition/apply')"
+                type="primary"
+                size="small"
+                @click="$router.push('/competition/apply')"
             >
               <el-icon><Plus /></el-icon> 申请新比赛
             </el-button>
           </div>
 
           <el-empty
-            v-if="!loading && organizedList.length === 0"
-            description="您还没有举办过比赛"
+              v-if="!loading && organizedList.length === 0"
+              description="您还没有举办过比赛"
           />
 
           <el-table
-            v-else
-            :data="organizedList"
-            v-loading="loading"
-            stripe
-            style="width: 100%"
+              v-else
+              :data="organizedList"
+              v-loading="loading"
+              stripe
+              class="full-width-table"
           >
             <el-table-column label="赛事名称" min-width="200">
               <template #default="scope">
-                <span style="font-weight: bold">{{ scope.row.name }}</span>
-                <div style="font-size: 12px; color: #999">
+                <span class="org-comp-name">{{ scope.row.name }}</span>
+                <div class="org-comp-slug">
                   Slug: {{ scope.row.slug }}
                 </div>
               </template>
@@ -106,31 +106,31 @@
 
             <el-table-column label="日期" width="150">
               <template #default="scope">{{
-                formatDate(scope.row.startDate)
-              }}</template>
+                  formatDate(scope.row.startDate)
+                }}</template>
             </el-table-column>
 
             <el-table-column label="审核状态" width="150">
               <template #default="scope">
                 <el-tag v-if="scope.row.status === 0" type="warning"
-                  >待审核</el-tag
+                >待审核</el-tag
                 >
                 <el-tag v-else-if="scope.row.status === 4" type="danger"
-                  >已驳回</el-tag
+                >已驳回</el-tag
                 >
                 <el-tag v-else type="success">已发布</el-tag>
               </template>
             </el-table-column>
 
             <el-table-column
-              label="审核意见"
-              min-width="150"
-              show-overflow-tooltip
+                label="审核意见"
+                min-width="150"
+                show-overflow-tooltip
             >
               <template #default="scope">
-                <span v-if="scope.row.status === 4" style="color: #f56c6c">{{
-                  scope.row.auditMsg
-                }}</span>
+                <span v-if="scope.row.status === 4" class="error-text">{{
+                    scope.row.auditMsg
+                  }}</span>
                 <span v-else>{{ scope.row.auditMsg || "-" }}</span>
               </template>
             </el-table-column>
@@ -138,37 +138,37 @@
             <el-table-column label="操作" width="280" align="center">
               <template #default="scope">
                 <el-button
-                  v-if="[0, 4].includes(scope.row.status)"
-                  link
-                  type="danger"
-                  @click="handleEdit(scope.row)"
+                    v-if="[0, 4].includes(scope.row.status)"
+                    link
+                    type="danger"
+                    @click="handleEdit(scope.row)"
                 >
                   <el-icon><Edit /></el-icon> 修改
                 </el-button>
 
                 <el-button
-                  v-if="[0, 4].includes(scope.row.status)"
-                  link
-                  type="danger"
-                  @click="handleDelete(scope.row)"
+                    v-if="[0, 4].includes(scope.row.status)"
+                    link
+                    type="danger"
+                    @click="handleDelete(scope.row)"
                 >
                   <el-icon><Delete /></el-icon> 删除
                 </el-button>
 
                 <el-button
-                  v-else
-                  link
-                  type="primary"
-                  @click="goDetail(scope.row.slug)"
+                    v-else
+                    link
+                    type="primary"
+                    @click="goDetail(scope.row.slug)"
                 >
                   预览
                 </el-button>
 
                 <el-button
-                  v-if="[1, 2, 3].includes(scope.row.status)"
-                  link
-                  type="warning"
-                  @click="$router.push(`/competition/${scope.row.slug}/score`)"
+                    v-if="[1, 2, 3].includes(scope.row.status)"
+                    link
+                    type="warning"
+                    @click="$router.push(`/competition/${scope.row.slug}/score`)"
                 >
                   管理
                 </el-button>
@@ -243,15 +243,15 @@ const handleEdit = (row) => {
 const handleDelete = async (row) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除比赛 "${row.name}" 吗？`,
-      "删除确认",
-      {
-        confirmButtonText: "确定删除",
-        cancelButtonText: "取消",
-        type: "warning"
-      }
+        `确定要删除比赛 "${row.name}" 吗？`,
+        "删除确认",
+        {
+          confirmButtonText: "确定删除",
+          cancelButtonText: "取消",
+          type: "warning"
+        }
     );
-    
+
     const res = await deleteCompetition(row.id);
     if (res.data.code === 200) {
       ElMessage.success("比赛删除成功");
@@ -271,3 +271,60 @@ onMounted(() => {
   loadJoined();
 });
 </script>
+
+<style scoped>
+.page-container {
+  max-width: 1200px;
+  margin: 20px auto;
+  padding: 0 20px;
+}
+
+.header-container {
+  margin-bottom: 20px;
+}
+
+.header-title {
+  color: #409eff;
+  display: inline-block;
+  margin-right: 20px;
+}
+
+.full-width-table {
+  width: 100%;
+}
+
+.comp-name {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.comp-location {
+  font-size: 12px;
+  color: #999;
+  margin-top: 5px;
+}
+
+.event-tag {
+  white-space: normal;
+  height: auto;
+  padding: 5px;
+}
+
+.action-container {
+  text-align: right;
+  margin-bottom: 10px;
+}
+
+.org-comp-name {
+  font-weight: bold;
+}
+
+.org-comp-slug {
+  font-size: 12px;
+  color: #999;
+}
+
+.error-text {
+  color: #f56c6c;
+}
+</style>

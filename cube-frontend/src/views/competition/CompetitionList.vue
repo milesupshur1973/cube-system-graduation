@@ -1,39 +1,39 @@
 <template>
-  <div style="max-width: 1200px; margin: 20px auto">
-    <h2 style="color: #409eff; margin-bottom: 20px">
+  <div class="page-container">
+    <h2 class="page-title">
       <el-icon><Trophy /></el-icon> 赛事列表
     </h2>
 
-    <div style="margin-bottom: 20px">
+    <div class="filter-container">
       <el-space>
         <el-select
-          v-model="filterYear"
-          placeholder="年份"
-          style="width: 120px"
-          clearable
+            v-model="filterYear"
+            placeholder="年份"
+            class="year-select"
+            clearable
         >
           <el-option label="所有年份" value="" />
           <el-option
-            v-for="year in yearOptions"
-            :key="year"
-            :label="year + '年'"
-            :value="year.toString()"
+              v-for="year in yearOptions"
+              :key="year"
+              :label="year + '年'"
+              :value="year.toString()"
           />
         </el-select>
 
         <el-select
-          v-model="filterProvince"
-          placeholder="省份"
-          style="width: 150px"
-          clearable
-          filterable
+            v-model="filterProvince"
+            placeholder="省份"
+            class="province-select"
+            clearable
+            filterable
         >
           <el-option label="所有省份" value="" />
           <el-option
-            v-for="item in provinceOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.label"
+              v-for="item in provinceOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.label"
           />
         </el-select>
 
@@ -44,50 +44,40 @@
 
     <el-card shadow="never" :body-style="{ padding: '0' }">
       <el-table
-        :data="tableData"
-        v-loading="loading"
-        stripe
-        style="width: 100%"
-        @row-click="handleRowClick"
-        row-class-name="clickable-row"
+          :data="tableData"
+          v-loading="loading"
+          stripe
+          class="full-width-table"
+          @row-click="handleRowClick"
+          row-class-name="clickable-row"
       >
         <el-table-column prop="startDate" label="日期" width="150" sortable />
 
         <el-table-column label="比赛名称" min-width="300">
           <template #default="scope">
-            <div
-              style="
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-              "
-            >
-              <div style="display: flex; align-items: center; gap: 10px">
-                <span
-                  style="font-weight: bold; font-size: 16px; color: #303133"
-                >
+            <div class="comp-name-wrapper">
+              <div class="comp-name-header">
+                <span class="comp-name-text">
                   {{ scope.row.name }}
                 </span>
               </div>
 
-              <div style="margin-top: 5px; font-size: 12px">
+              <div class="comp-meta">
                 <div v-if="isUpcoming(scope.row.startDate)">
                   <el-countdown
-                    format="D 天 H 小时 m 分"
-                    :value="new Date(scope.row.startDate).getTime()"
-                    value-style="font-size: 12px; color: #E6A23C"
+                      format="D 天 H 小时 m 分"
+                      :value="new Date(scope.row.startDate).getTime()"
+                      value-style="font-size: 12px; color: #E6A23C"
                   >
                     <template #prefix>
-                      <span style="color: #909399; margin-right: 5px"
-                        >距离比赛还有:</span
-                      >
+                      <span class="countdown-prefix">距离比赛还有:</span>
                     </template>
                   </el-countdown>
                 </div>
 
                 <div v-else>
                   <el-tag type="info" size="small" effect="plain"
-                    >比赛已结束</el-tag
+                  >比赛已结束</el-tag
                   >
                 </div>
               </div>
@@ -100,14 +90,14 @@
         <el-table-column prop="location" label="地点" show-overflow-tooltip />
       </el-table>
 
-      <div style="padding: 20px; display: flex; justify-content: flex-end">
+      <div class="pagination-container">
         <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :total="total"
-          layout="total, prev, pager, next, jumper"
-          @current-change="handleCurrentChange"
-          background
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :total="total"
+            layout="total, prev, pager, next, jumper"
+            @current-change="handleCurrentChange"
+            background
         />
       </div>
     </el-card>
@@ -226,5 +216,67 @@ onMounted(() => {
 }
 .clickable-row:hover > td {
   background-color: #f5f7fa !important;
+}
+</style>
+
+<style scoped>
+.page-container {
+  max-width: 1200px;
+  margin: 20px auto;
+}
+
+.page-title {
+  color: #409eff;
+  margin-bottom: 20px;
+}
+
+.filter-container {
+  margin-bottom: 20px;
+}
+
+.year-select {
+  width: 120px;
+}
+
+.province-select {
+  width: 150px;
+}
+
+.full-width-table {
+  width: 100%;
+}
+
+.comp-name-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.comp-name-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.comp-name-text {
+  font-weight: bold;
+  font-size: 16px;
+  color: #303133;
+}
+
+.comp-meta {
+  margin-top: 5px;
+  font-size: 12px;
+}
+
+.countdown-prefix {
+  color: #909399;
+  margin-right: 5px;
+}
+
+.pagination-container {
+  padding: 20px;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

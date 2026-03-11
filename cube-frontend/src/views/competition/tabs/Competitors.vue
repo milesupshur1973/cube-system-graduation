@@ -1,60 +1,58 @@
 <template>
   <div>
-    <h3 style="margin-bottom: 20px; color: #409eff">
+    <h3 class="title">
       <el-icon><User /></el-icon> 参赛选手列表
     </h3>
 
-    <div style="margin-bottom: 15px; color: #666; font-size: 14px">
+    <div class="summary-text">
       共 {{ total }} 位选手报名
     </div>
 
     <el-table
-      :data="competitorList"
-      v-loading="loading"
-      border
-      stripe
-      style="width: 100%"
+        :data="competitorList"
+        v-loading="loading"
+        border
+        stripe
+        class="competitor-table"
     >
-      <el-table-column 
-        type="index" 
-        :index="indexMethod" 
-        label="#" 
-        width="50" 
-        align="center" 
-      />
-      
       <el-table-column
-        prop="name"
-        label="姓名"
-        width="120"
-        show-overflow-tooltip
+          type="index"
+          :index="indexMethod"
+          label="#"
+          width="50"
+          align="center"
+      />
+
+      <el-table-column
+          prop="name"
+          label="姓名"
+          width="120"
+          show-overflow-tooltip
       />
       <el-table-column prop="gender" label="性别" width="60" align="center">
         <template #default="scope">
-          <span v-if="scope.row.gender === 'M'" style="color: #409eff">男</span>
-          <span v-else-if="scope.row.gender === 'F'" style="color: #f56c6c"
-            >女</span
-          >
+          <span v-if="scope.row.gender === 'M'" class="gender-male">男</span>
+          <span v-else-if="scope.row.gender === 'F'" class="gender-female">女</span>
           <span v-else>保密</span>
         </template>
       </el-table-column>
       <el-table-column
-        prop="province"
-        label="地区"
-        width="100"
-        show-overflow-tooltip
+          prop="province"
+          label="地区"
+          width="100"
+          show-overflow-tooltip
       />
       <el-table-column prop="displayId" label="WCAID" width="110" />
 
       <el-table-column
-        v-for="event in eventList"
-        :key="event.eventId"
-        :label="event.eventName"
-        align="center"
-        min-width="80"
+          v-for="event in eventList"
+          :key="event.eventId"
+          :label="event.eventName"
+          align="center"
+          min-width="80"
       >
         <template #header>
-          <span style="font-size: 13px">{{ event.name }}</span>
+          <span class="event-header-text">{{ event.name }}</span>
         </template>
 
         <template #default="scope">
@@ -64,14 +62,14 @@
         </template>
       </el-table-column>
     </el-table>
-    <div style="margin-top: 20px; display: flex; justify-content: flex-end">
+    <div class="pagination-container">
       <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :total="total"
-        layout="total, prev, pager, next"
-        @current-change="handleCurrentChange"
-        background
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :total="total"
+          layout="total, prev, pager, next"
+          @current-change="handleCurrentChange"
+          background
       />
     </div>
   </div>
@@ -87,7 +85,7 @@ import { useEventStore } from "@/stores/event";
 
 const props = defineProps(["compInfo"]);
 const competitorList = ref([]);
-const eventList = ref([]); 
+const eventList = ref([]);
 const eventStore = useEventStore();
 
 const loading = ref(false);
@@ -147,12 +145,53 @@ const hasEvent = (row, targetEventId) => {
 };
 
 watch(
-  () => props.compInfo,
-  (newVal) => {
-    if (newVal.id) {
-      loadData();
-    }
-  },
-  { immediate: true }
+    () => props.compInfo,
+    (newVal) => {
+      if (newVal.id) {
+        loadData();
+      }
+    },
+    { immediate: true }
 );
 </script>
+
+<style scoped>
+/* 标题样式 */
+.title {
+  margin-bottom: 20px;
+  color: #409eff;
+}
+
+/* 汇总文本样式 */
+.summary-text {
+  margin-bottom: 15px;
+  color: #666;
+  font-size: 14px;
+}
+
+/* 表格宽度撑满 */
+.competitor-table {
+  width: 100%;
+}
+
+/* 性别文本颜色 */
+.gender-male {
+  color: #409eff;
+}
+
+.gender-female {
+  color: #f56c6c;
+}
+
+/* 表头项目名文本 */
+.event-header-text {
+  font-size: 13px;
+}
+
+/* 分页容器靠右对齐 */
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+</style>
