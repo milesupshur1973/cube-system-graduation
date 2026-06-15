@@ -173,6 +173,29 @@
           </div>
         </el-tab-pane>
 
+        <el-tab-pane label="成绩趋势图" name="trendChart">
+          <div v-if="historyByEvent.length > 0" class="chart-container">
+            <div class="chart-controls">
+              <el-text tag="b">选择要查看的项目：</el-text>
+              <el-select
+                  v-model="selectedEvent"
+                  placeholder="请选择项目"
+                  style="width: 200px; margin-left: 10px;"
+                  @change="drawChart"
+              >
+                <el-option
+                    v-for="group in historyByEvent"
+                    :key="group.eventName"
+                    :label="group.eventName"
+                    :value="group.eventName"
+                />
+              </el-select>
+            </div>
+            <div ref="chartDom" style="width: 100%; height: 400px; margin-top: 20px;"></div>
+          </div>
+          <el-empty v-else description="暂无历史成绩数据" />
+        </el-tab-pane>
+
       </el-tabs>
     </el-card>
   </div>
@@ -181,7 +204,8 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
-import axios from "axios";
+import * as echarts from 'echarts';
+import { nextTick } from 'vue';
 import { ElMessage } from "element-plus";
 import { getPublicUser } from "@/api/user";
 import { getPersonPBs,getPersonHistory } from "@/api/result";
@@ -194,6 +218,9 @@ const historyTab = ref("byCompetition"); // 默认选中的 Tab
 const historyList = ref([]); // 存储后端返回的原始列表
 const historyByCompetition = ref([]); // 分组后的数据
 const historyByEvent = ref([]); // 分组后的数据
+const selectedEvent = ref(''); // 当前选中的项目
+const chartDom = ref(null); // 图表的 DOM 引用
+let myChart = null; // ECharts 实例
 
 const formatTime = (ms) => {
   if (ms === -1) return "DNF";
@@ -283,6 +310,100 @@ const processHistory = (list) => {
   historyByEvent.value = Array.from(eventMap.values());
 };
 
+// 画图方法
+const drawChart = () => {
+  if (!chartDom.value || !selectedEvent.value) return;
+
+  // 找到当前选中项目的所有记录
+  const eventData = historyByEvent.value.find(e => e.eventName === selectedEvent.value);
+  if (!eventData || !eventData.records) return;
+
+  // 按照比赛日期从早到晚排序 (保证 X 轴时间是正向的)
+  const sortedRecords = [...eventData.records].sort((a, b) => {
+    return new Date(a.competitionDate) - new Date(b.competitionDate);
+  });
+
+  // 准备 X 轴 (比赛名称/日期) 和 Y 轴 (成绩) 数据
+  const xAxisData = [];
+  const bestData = [];
+  const averageData = [];
+
+  sortedRecords.forEach(item => {
+    // X轴显示比赛短名称即可
+    xAxisData.push(item.competitionName);
+
+    // Y轴需要数字，我们将毫秒转换为秒 (例如 9500 -> 9.5)
+    // 注意：如果是 -1 (DNF) 我们就填 null，让图表断开不显示 DNF
+    bestData.push(item.best > 0 ? (item.best / 1000).toFixed(2) : null);
+    averageData.push(item.average > 0 ? (item.average / 1000).toFixed(2) : null);
+  });
+
+  // 初始化或更新 ECharts
+  if (myChart != null && myChart !== "" && myChart !== undefined) {
+    myChart.dispose(); // 销毁旧图表
+  }
+  myChart = echarts.init(chartDom.value);
+
+  // ECharts 配置项 (保持 Element Plus 的清爽风格)
+  // ECharts 配置项 (保持 Element Plus 的清爽风格)
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      formatter: function (params) {
+        let res = `<b>${params[0].axisValue}</b><br/>`;
+        params.forEach(p => {
+          if (p.data !== null) {
+            res += `${p.marker} ${p.seriesName}: ${p.data} 秒<br/>`;
+          }
+        });
+        return res;
+      }
+    },
+    legend: {
+      data: ['单次最佳 (Best)', '平均成绩 (Average)'],
+      top: '0%' // 🌟 关键修改 1：将图例明确移到顶部，远离 X 轴文字
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '25%', // 🌟 关键修改 2：把原本的 3% 增大到 25% (或者写绝对数值如 80)，给底部倾斜长文字留足空间
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: xAxisData,
+      axisLabel: {
+        rotate: 35, // 稍微再倾斜一点点
+        interval: 0 // 🌟 关键修改 3：强制显示所有的 X 轴标签，防止如果比赛太多 ECharts 自动隐藏部分名字
+      }
+    },
+    yAxis: {
+      type: 'value',
+      name: '时间 (秒)',
+      scale: true // Y轴不强制从0开始，放大成绩波动的视觉效果
+    },
+    series: [
+      {
+        name: '单次最佳 (Best)',
+        type: 'line',
+        data: bestData,
+        itemStyle: { color: '#409eff' },
+        smooth: true
+      },
+      {
+        name: '平均成绩 (Average)',
+        type: 'line',
+        data: averageData,
+        itemStyle: { color: '#67c23a' },
+        smooth: true
+      }
+    ]
+  };
+
+  myChart.setOption(option);
+};
+
 onMounted(() => {
   loadData(route.params.displayId);
 });
@@ -294,6 +415,20 @@ watch(
       if (newId) loadData(newId);
     }
 );
+
+// 监听 Tab 切换，解决 ECharts 在隐藏 Tab 中宽度变为 0 的经典 Bug
+watch(historyTab, (newTab) => {
+  if (newTab === 'trendChart') {
+    // 如果用户是第一次点开这个 Tab，且还没选中项目，默认选中他的第一个项目
+    if (!selectedEvent.value && historyByEvent.value.length > 0) {
+      selectedEvent.value = historyByEvent.value[0].eventName;
+    }
+    // 等待 DOM 渲染完毕后画图
+    nextTick(() => {
+      drawChart();
+    });
+  }
+});
 </script>
 
 <style scoped>
@@ -399,5 +534,16 @@ watch(
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.chart-container {
+  padding: 10px;
+}
+.chart-controls {
+  display: flex;
+  align-items: center;
+  background-color: var(--el-fill-color-light);
+  padding: 15px;
+  border-radius: 4px;
 }
 </style>

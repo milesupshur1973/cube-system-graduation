@@ -67,7 +67,7 @@
                   <el-countdown
                       format="D 天 H 小时 m 分"
                       :value="new Date(scope.row.startDate).getTime()"
-                      value-style="font-size: 12px; color: #E6A23C"
+                      value-style="font-size: 17px; color: #E6A23C"
                   >
                     <template #prefix>
                       <span class="countdown-prefix">距离比赛还有:</span>

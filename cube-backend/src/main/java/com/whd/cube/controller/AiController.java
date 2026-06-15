@@ -18,7 +18,7 @@ import java.util.Map;
 public class AiController {
 
     // 1. 你的 Token (从 ModelScope 网页复制的)
-    private static final String API_KEY = "ms-422b2778-a99b-4927-b9a8-598c3e705c28";
+    private static final String API_KEY = "ms-b80290ed-e22e-4ad4-9b03-b56dea57da35";
 
     // 2. ModelScope 的兼容接口地址 (不用改)
     private static final String API_URL = "https://api-inference.modelscope.cn/v1/chat/completions";
@@ -33,11 +33,11 @@ public class AiController {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.set("Authorization", "Bearer " + API_KEY);
 
-        // B. 构建请求体 (完全按照 OpenAI 的标准格式)
+        // B. 构建请求体
         Map<String, Object> body = new HashMap<>();
-        // 模型名称：Qwen/Qwen2.5-Coder-32B-Instruct 是代码能力很强的模型，也适合中文对话
-        body.put("model", "Qwen/Qwen2.5-Coder-32B-Instruct");
-        body.put("stream", false); // 咱们毕设简单点，不用流式，一次性返回
+        // 模型名称：deepseek-ai/DeepSeek-V3.2 是代码能力很强的模型，也适合中文对话
+        body.put("model", "deepseek-ai/DeepSeek-V3.2");
+        body.put("stream", false); //不用流式，一次性返回
 
         List<Map<String, String>> messages = new ArrayList<>();
 

@@ -29,6 +29,7 @@
           <el-menu-item :index="`/competition/${slug}/competitors`"
           >选手</el-menu-item
           >
+          <el-menu-item :index="`/competition/${slug}/location`">地图</el-menu-item>
           <el-menu-item
               v-if="compInfo.status === 1"
               :index="`/competition/${slug}/registration`"

@@ -4,17 +4,13 @@ server:
 spring:
   application:
     name: cube-backend
+  profiles:
+    active: test
 
   servlet:
     multipart:
       max-file-size: 5MB      #文件大小
       max-request-size: 10MB  #单次请求总大小
-
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/cube_system3?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
-    username: root
-    password: saveme
 
 # MyBatis Plus
 mybatis-plus:
@@ -29,3 +25,28 @@ mybatis-plus:
 cube:
   jwt:
     secret: MySuperSecretKeyForCubeSystemGraduationProject2025
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev  # 标识这块内容属于 dev 环境
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 原数据库 cube_system3
+    url: jdbc:mysql://localhost:3306/cube_system3?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: saveme
+
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test # 标识这块内容属于 test 环境
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 测试数据库 cube_system_test
+    url: jdbc:mysql://localhost:3306/cube_system_test?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    username: root
+    password: saveme

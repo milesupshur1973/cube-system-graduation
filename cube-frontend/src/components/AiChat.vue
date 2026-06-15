@@ -87,7 +87,8 @@ const sendMessage = async () => {
   loading.value = true
   try {
     const res = await request.post('/ai/chat', question, {
-      headers: { 'Content-Type': 'text/plain' }
+      headers: { 'Content-Type': 'text/plain' },
+      timeout: 60000
     })
 
     const result = res.data;

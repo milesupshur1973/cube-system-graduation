@@ -50,6 +50,10 @@ const router = createRouter({
           path: "registration",
           component: () => import("../views/competition/tabs/Registration.vue"),
         },
+        {
+          path: 'location',
+          component: () => import('../views/competition/tabs/Location.vue')
+        }
         // 注意：如果你还没创建 Competitors.vue (选手列表)，这行先注释掉，不然报错
         // { path: 'competitors', component: () => import('../views/competition/tabs/Competitors.vue') }
       ],

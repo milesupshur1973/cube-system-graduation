@@ -43,7 +43,7 @@
 
       <el-col :span="7" :xs="24">
         <h3 class="section-title">
-          <el-icon class="title-icon"><Trophy /></el-icon> 近期赛事
+          <el-icon class="title-icon"><Location /></el-icon> 附近赛事
         </h3>
         <el-card shadow="never">
           <div
@@ -53,7 +53,9 @@
           >
             <el-row align="middle" class="comp-row" @click="goDetail(comp.slug)">
               <el-col :span="8">
-                <el-tag size="large" effect="plain">{{ formatDate(comp.startDate) }}</el-tag>
+                <el-tag size="large" effect="plain" :type="comp.distanceText ? 'success' : 'info'">
+                  {{ comp.distanceText ? comp.distanceText : formatDate(comp.startDate) }}
+                </el-tag>
               </el-col>
               <el-col :span="16">
                 <div class="comp-title">{{ comp.name }}</div>
@@ -62,7 +64,7 @@
             </el-row>
           </div>
           <el-empty v-if="compList.length === 0" description="暂无赛事" :image-size="60" />
-          <el-button class="more-btn" @click="$router.push('/competition')">查看更多</el-button>
+          <el-button class="more-btn" @click="$router.push('/competition')">查看全部赛事</el-button>
         </el-card>
       </el-col>
     </el-row>
@@ -85,6 +87,7 @@ import { useRouter } from "vue-router";
 import { Bell, Trophy, Location } from "@element-plus/icons-vue";
 import { getArticleList } from "@/api/article";
 import { getUpcomingCompetitions } from "@/api/competition";
+import { initAMap, getUserLocation, calculateDistancesAndSort } from "@/utils/map";
 
 const router = useRouter();
 const newsList = ref([]);
@@ -122,22 +125,41 @@ const openArticle = (news) => {
 
 const loadData = async () => {
   try {
-    const newsRes = await getArticleList({
-      page: currentPage.value,
-      size: pageSize.value
-    });
+    // 1. 加载新闻（原有逻辑）
+    const newsRes = await getArticleList({ page: currentPage.value, size: pageSize.value });
     if (newsRes.data.code === 200) {
-      // 修复：使用 records 代替 list
       newsList.value = newsRes.data.data.records;
       total.value = newsRes.data.data.total;
     }
+
+    // 2. 加载所有近期赛事
     const compRes = await getUpcomingCompetitions();
+    let rawCompList = [];
     if (compRes.data.code === 200) {
-      compList.value = compRes.data.data;
+      rawCompList = compRes.data.data;
     }
+
+    // --- 开始地图智能推荐逻辑 ---
+    try {
+      // a. 初始化地图工具
+      await initAMap();
+      // b. 获取用户位置 (浏览器可能会在此刻弹窗询问是否允许定位)
+      const userPos = await getUserLocation();
+      // c. 计算距离并排序
+      const sortedList = await calculateDistancesAndSort(userPos, rawCompList);
+      // d. 截取离得最近的 5 个展示
+      compList.value = sortedList.slice(0, 5);
+
+    } catch (mapError) {
+      console.warn("地理位置获取失败，已降级为按时间显示", mapError);
+      // 兜底机制：如果定位失败（如用户拒绝、无网络等），就按原来的逻辑只展示前5个
+      compList.value = rawCompList.slice(0, 5);
+    }
+
   } catch (e) {
     console.error("加载数据失败:", e);
     newsList.value = [];
+    compList.value = [];
     total.value = 0;
   }
 };
