@@ -10,6 +10,7 @@ import com.whd.cube.entity.User;
 import com.whd.cube.service.CompetitionEventService;
 import com.whd.cube.service.CompetitionService;
 import com.whd.cube.service.UserService;
+import com.whd.cube.websocket.NoticeWebSocketServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -224,6 +225,11 @@ public class CompetitionController {
         }
 
         competitionService.updateById(comp);
+
+        if (pass) {
+            NoticeWebSocketServer.sendAllMessage("🎉 新赛事【" + comp.getName() + "】已开放报名，名额有限，速抢！");
+        }
+
         return Result.success(pass ? "已通过审核" : "已驳回申请");
     }
 

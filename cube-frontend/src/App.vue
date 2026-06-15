@@ -117,12 +117,15 @@ import {
   Monitor,
   UserFilled
 } from "@element-plus/icons-vue";
+import { onUnmounted } from 'vue'
+import { ElNotification } from 'element-plus'
 
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 const eventStore = useEventStore();
 const activeIndex = ref("/");
+let ws = null;
 
 // 监听路由变化，高亮对应的菜单
 watch(
@@ -138,10 +141,37 @@ const handleLogout = () => {
   router.push("/");
 };
 
+// websocket即时通信
+const initWebSocket = () => {
+  const wsUrl = 'ws://localhost:8080/ws/notice';
+  ws = new WebSocket(wsUrl);
+
+  ws.onmessage = (event) => {
+    ElNotification({
+      title: '系统实时广播',
+      message: event.data,
+      type: 'success',
+      duration: 5000 // 5秒后自动消失
+    })
+  };
+
+  ws.onerror = () => {
+    console.log("WebSocket 连接失败，忽略此错误以防影响业务逻辑");
+  };
+};
+
 // 4. 应用挂载时，立即拉取项目字典
 onMounted(() => {
   eventStore.loadEvents();
+  initWebSocket();
 });
+
+onUnmounted(() => {
+  if (ws) {
+    ws.close();
+  }
+});
+
 </script>
 
 <style scoped>
